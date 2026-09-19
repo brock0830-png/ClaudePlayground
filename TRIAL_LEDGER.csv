@@ -1,0 +1,1 @@
+trial_id,timestamp,phase,hypothesis,cell,params,window_start,window_end,lag,cost_mult,cagr,vol,sharpe,sortino,maxdd,mar,turnover_ann,trades_per_year,consec_day_roundtrips_per_year,avg_leverage,note
