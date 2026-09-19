@@ -2,7 +2,7 @@
 
 Adopted 2026-09-19 at the client's request in place of the pre-registered TALOS v1 (whose rules are kept at the end). One decision per day, after the close, using adjusted closing prices. Orders are placed for the next day's close. Everything below can be computed by hand from closing prices.
 
-**Instruments.** QQQ, SPY, IWM, TLT, GLD, IEF, and a cash sleeve (BIL or a same-day money-market fund). For exposure above 1x the same positions are expressed with the 3x funds TQQQ, UPRO, TMF and the 2x fund UST, never with borrowing. The gold sleeve is never levered (no UGL). No inverse funds.
+**Instruments.** QQQ, SPY, IWM, TLT, GLD, IEF, and a cash sleeve (BIL or a same-day money-market fund). At the recommended 1.25x multiplier no leveraged fund is ever held (see the multiplier paragraph). The gold sleeve is never levered (no UGL). No inverse funds, never any borrowing.
 
 **Three sleeves: 49% equity core, 21% momentum rotation, 30% gold.** (The v1 70/30 split scaled by 0.7, plus a 30% gold sleeve.)
 
@@ -18,7 +18,7 @@ Adopted 2026-09-19 at the client's request in place of the pre-registered TALOS 
 
 **Rebalancing band.** Compare each instrument's target weight with its current drifted weight. Only trade an instrument when the difference exceeds 2% of account equity. At 1.25x this is about 100 trades a year and 9 next-day round trips a year; no limited margin is needed.
 
-**Exposure multiplier: 1.25 (recommended).** Multiply every target exposure by 1.25. For QQQ the part of the exposure above 1x is carried in TQQQ so that fund weights still sum to 100% or less (weight in TQQQ = (exposure − 1)/2, the rest in QQQ). SPY, IWM, TLT, IEF and GLD exposures never exceed 1x at this multiplier, so those stay in the 1x funds. Use 1.0 for a version with no leveraged funds at all (1991-2026: CAGR 10.2%, worst drawdown 11.3%, MAR 0.91).
+**Exposure multiplier: 1.25 (recommended).** Multiply every target exposure by 1.25. Because the gold sleeve scales the equity sleeves to 70%, no exposure ever exceeds 1x at this multiplier (the largest QQQ exposure over 1991-2026 was 70% of equity), so **no leveraged fund is ever held at 1.25x**: the multiplier only scales unlevered weights, and if the three sleeves together would exceed 100% they are scaled down proportionally. Leveraged funds (TQQQ etc.) would only enter above about 1.8x, which is not recommended. Use 1.0 for the lower-vol version (1991-2026: CAGR 10.2%, worst drawdown 11.3%, MAR 0.91).
 
 **Costs assumed.** 2 bp commission plus half spread per trade, doubled on leveraged funds.
 

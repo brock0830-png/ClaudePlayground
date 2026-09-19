@@ -15,7 +15,7 @@ Verdict: **not met on any window longer than a decade** by any configuration. Ne
 | Window | Config | CAGR | Vol | Sharpe | MaxDD | MAR | Trades/yr |
 |---|---|---|---|---|---|---|---|
 | 1991-01-04 → 2026-09-18 | **TALOS v2 (T7) 1.25x** | 11.7% | 11.1% | 0.81 | -14.0% | 0.83 | 100 |
-| 1991-01-04 → 2026-09-18 | TALOS v2 (T7) 1.0x (no leveraged funds) | 10.2% | 9.2% | 0.81 | -11.3% | 0.91 | 85 |
+| 1991-01-04 → 2026-09-18 | TALOS v2 (T7) 1.0x | 10.2% | 9.2% | 0.81 | -11.3% | 0.91 | 85 |
 | 1991-01-04 → 2015-12-31 | TALOS v2 (T7) 1.25x | 11.1% | 11.0% | 0.72 | -13.9% | 0.79 | — |
 | 2016-01-04 → 2026-09-18 | TALOS v2 (T7) 1.25x | 13.1% | 11.4% | 0.99 | -13.2% | 1.00 | — |
 | 1991-01-04 → 2026-09-18 | TALOS v1 1x | 10.3% | 10.2% | 0.75 | -15.5% | 0.67 | 74 |
@@ -34,7 +34,7 @@ One decision per trading day, after the close, from **dividend-adjusted closing 
 
 ### 2.1 Instruments
 
-Underlyings: **QQQ, SPY, IWM, TLT, IEF, GLD**, plus a cash sleeve (BIL, SHV or a same-day-settling money-market fund). Leveraged expressions used only when the exposure multiplier is above 1.0: TQQQ (3x QQQ), UPRO (3x SPY), TMF (3x TLT), UST (2x IEF). At the recommended 1.25x only TQQQ is ever used. The gold sleeve is never levered (no UGL). IWM has no leveraged fund and is capped at 1x. No inverse funds.
+Underlyings: **QQQ, SPY, IWM, TLT, IEF, GLD**, plus a cash sleeve (BIL, SHV or a same-day-settling money-market fund). Leveraged expressions exist in the fund set (TQQQ, UPRO, TMF, UST) but **at the recommended 1.25x none is ever held**: because the gold sleeve scales the equity sleeves to 70%, the largest QQQ exposure is 0.49 × 1.25 + 0.07 = 0.70 of equity (verified over 1991-2026: only QQQ, SPY, IWM, TLT, IEF, GLD were ever held). Leveraged funds enter only above about 1.8x. The gold sleeve is never levered (no UGL). No inverse funds.
 
 ### 2.2 Sleeve A — equity core, 49% of capital (= 70% × 0.7)
 
@@ -65,11 +65,11 @@ Each day: if `close_GLD > SMA250_GLD` hold GLD at `min(1, 0.10 / vol20_GLD)` of 
 
 Exposure per underlying (units of the underlying): `E_u = 0.49 × coreExposure_u + 0.21 × rotationExposure_u + 0.30 × goldExposure_u` (core contributes to QQQ and IEF; gold sleeve to GLD only).
 
-Multiply every `E_u` by the **exposure multiplier m = 1.25** (or 1.0 for no leveraged funds). Map each `m·E_u` to fund weights per underlying:
+Multiply every `E_u` by the **exposure multiplier m = 1.25** (or 1.0 for the lower-vol version). Map each `m·E_u` to fund weights per underlying:
 - `m·E_u ≤ 1`: hold `m·E_u` in the 1x fund.
 - `1 < m·E_u ≤ L` (L = 3 for QQQ/SPY/TLT, 2 for IEF, 1 for IWM and, by rule, GLD): weight in the L-x fund `b = (m·E_u − 1)/(L − 1)`, in the 1x fund `1 − b`.
 - `m·E_u > L`: 100% in the L-x fund.
-If all fund weights sum to more than 1, scale them down proportionally to sum to 1. Cash = 1 − sum. **No borrowing.** At m = 1.25 the only case above 1x is QQQ (max `m·E_u` = 1.25 × (0.49 + 0.07) = 0.70 from the core plus rotation… in practice ≤ 0.79), so the mapping only ever puts part of the QQQ exposure in TQQQ.
+If all fund weights sum to more than 1 (possible when all three sleeves are fully invested: 0.61 + 0.26 + 0.46), scale them down proportionally to sum to 1. Cash = 1 − sum. **No borrowing.** At m = 1.25 no `m·E_u` exceeds 1 (maxima over 1991-2026: QQQ 0.70, IEF 0.61, GLD 0.46, SPY/IWM/TLT 0.09), so every position is in a 1x fund and the multiplier acts only as a scale on unlevered weights.
 
 ### 2.6 Rebalance band
 
@@ -159,7 +159,7 @@ Post-holdout (1991-2015 / 2016-2026): trend-gated bonds in the core's idle cash 
 ## 7. Behaviour to expect live
 
 - Roughly matches SPY's return at 1.25x with a quarter of SPY's worst drawdown; falls behind buy-and-hold in calm low-vol bull markets (1995-97, 2019, 2021), pulls ahead in bears it can sidestep (2000-02, 2008), and loses in years where equities and bonds fall together with whipsaw trends (v2 at 1.25x: 1994 −2.6%, 2004 −2.0%, 2005 −3.7%, 2015 −5.0%, 2022 −11.8%).
-- Three things most likely to break it: (1) a grinding QQQ bear with bonds falling too, because the core's fallback is IEF; (2) a gold bear while equities chop, because the gold sleeve is 30% of capital and gold's proxy era (pre-2004) is the least tested; (3) data/execution drift on marginal gate days, and TQQQ mechanics for the slice of QQQ exposure above 1x (financing spread has drifted more than 1%/yr between halves of its live history).
+- Three things most likely to break it: (1) a grinding QQQ bear with bonds falling too, because the core's fallback is IEF; (2) a gold bear while equities chop, because the gold sleeve is 30% of capital and gold's proxy era (pre-2004) is the least tested; (3) data/execution drift on marginal gate and dip-trigger days (a one-day miss costs little: lag-3 MAR 0.80 vs 0.83; a same-close fill is worse, 0.68, because the dip boost benefits from the next-day delay).
 - Settlement: keep cash in a same-day money fund; on the rare next-day cut, sell only settled shares. About 100 trades and 9 next-day round trips a year at 1.25x; no limited margin needed.
 
 ---
