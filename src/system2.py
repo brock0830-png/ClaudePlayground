@@ -20,7 +20,7 @@ import system as S
 PARAMS2 = dict(S.PARAMS, dd_cut=0.0,
                resid_set=(), resid_len=200,
                w_gold=0.0, gold_len=200, gold_vt=0.0, gold_assets=("GLD",), gold_lev=1.0,
-               gate_band=0.0, vol_win2=0, fallback="IEF",
+               gate_band=0.0, vol_win2=0, fallback="IEF", core_asset="QQQ",
                dip_n=0, dip_hold=5, dip_boost=1.0, dip_off_frac=0.0, dip_mult=0.0)
 
 
@@ -49,10 +49,11 @@ def _gate(q, s, band):
 
 
 def core_weights2(R, L, p):
-    q = L["QQQ_X"]; s = sma(q, p["sma_len"]); on = _gate(q, s, p["gate_band"])
-    v = realised_vol(R["QQQ_X"], p["vol_win"])
+    A = p["core_asset"]                      # P8: the core can run on any base asset column f"{A}_X"
+    q = L[f"{A}_X"]; s = sma(q, p["sma_len"]); on = _gate(q, s, p["gate_band"])
+    v = realised_vol(R[f"{A}_X"], p["vol_win"])
     if p["vol_win2"] > 0:
-        v = pd.concat([v, realised_vol(R["QQQ_X"], p["vol_win2"])], axis=1).max(axis=1)   # P7: the higher of two windows
+        v = pd.concat([v, realised_vol(R[f"{A}_X"], p["vol_win2"])], axis=1).max(axis=1)   # P7: the higher of two windows
     size = (p["vol_target"] / v).clip(upper=1.0)
     e_q = pd.Series(np.where(on, size, 0.0), q.index)
     warm = s.isna() | size.isna()
@@ -65,7 +66,7 @@ def core_weights2(R, L, p):
             off_buy = _hold_flag(low & ~on, p["dip_hold"]) & ~on
             e_q = pd.Series(np.where(off_buy, p["dip_off_frac"], e_q), q.index)
     e_q[warm] = 0.0
-    out = pd.DataFrame({"QQQ": e_q})
+    out = pd.DataFrame({A: e_q})
     if p["fallback"] == "IEF":
         b_on = L["IEF_X"] > sma(L["IEF_X"], p["sma_len"])
         e_b = pd.Series(np.where(~on & b_on, 1.0, 0.0), q.index); e_b[s.isna()] = 0.0
@@ -76,7 +77,7 @@ def core_weights2(R, L, p):
         best = mom.fillna(-9).idxmax(axis=1); ok = (mom.max(axis=1) > cm) & ~on & ~s.isna() & mom.notna().all(axis=1)
         for u in cands:
             out[u] = np.where(ok & (best == u), 1.0, 0.0)
-    e_b = out.drop(columns=["QQQ"]).sum(axis=1)
+    e_b = out.drop(columns=[A]).sum(axis=1)
     # A. residual deployment
     if p["resid_set"]:
         resid = (1.0 - e_q - e_b).clip(lower=0.0); resid[warm] = 0.0
