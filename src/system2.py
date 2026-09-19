@@ -24,6 +24,10 @@ PARAMS2 = dict(S.PARAMS, dd_cut=0.0,
                dip_n=0, dip_hold=5, dip_boost=1.0, dip_off_frac=0.0, dip_mult=0.0)
 
 
+# T7: the live configuration adopted by the client on 2026-09-19 (see RULES.md). TALOS v1 = PARAMS2 defaults.
+PARAMS_T7 = dict(PARAMS2, sma_len=250, gate_band=0.01, dip_n=10, dip_hold=5, dip_mult=2.0, w_gold=0.3, gold_vt=0.10, lever=1.25)
+
+
 def _nday_low(x: pd.Series, n: int) -> pd.Series:
     return x <= x.rolling(n, min_periods=n).min()
 

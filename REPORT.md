@@ -2,6 +2,8 @@
 
 Freeze commit `06a6f79` (RULES.md and `src/system.py` PARAMS). Holdout run once at the next commit by `src/run_holdout.py`, which then wrote `reports/holdout/RAN_ONCE` and refuses to run again. All figures below are read from `reports/holdout/holdout_metrics.csv`, `TRIAL_LEDGER.csv` and the Phase 3 CSVs; nothing is quoted from memory.
 
+> **Adoption note (2026-09-19).** At the client's request the live configuration is now **TALOS v2 = T7** (section 11c; rules in RULES.md; `daily_signal.py` defaults to it, `--v1` prints the pre-registered system). Sections 1-10 below describe the pre-registered TALOS v1 and its one-shot holdout, which remain the only clean out-of-sample evidence in this report; v2's numbers (sections 11b-11c) are in-sample by construction.
+
 ## 1. Verdict against the objective
 
 Objective: CAGR at least 15% with MAR at least 1.0 (stretch 1.25). **Not met in any full window.** The best MAR of any configuration over a full window is 0.82 (final system at 1x exposure, holdout 2016-2026), with CAGR 11.8%. The only way to reach 15% CAGR is the 2.5x to 3x exposure multiplier, which gives CAGR 14.6% to 15.6% over 1998-2026 at MAR 0.57 to 0.56. MAR above 1.0 appears only inside single episodes (2007-09 and 2020 at 1x). A negative result on the stated target is the honest deliverable; what the system does deliver is a Sharpe of 0.75 over 28 years with a 15.5% worst drawdown, versus 0.53 and 22.7% for the simple 200-day timing baseline and 0.44 and 55.2% for buy and hold.
