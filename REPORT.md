@@ -239,7 +239,32 @@ What the new seven years say. The system behaves in 1991-1997 the way it behaves
 
 Data note found during this step: re-harvesting FMP tool results had overwritten eight SPY rows (2024-03-11 to 2024-03-20) with unadjusted-endpoint rows lacking `adjClose`. The merge in `src/fmp_ingest.py` and `src/transcript_harvest.py` now merges field-by-field per date (last non-null wins) and the rows were restored from the saved tool results before any panel was rebuilt; the frozen panel was verified to be reproduced exactly afterwards, so no reported figure changed.
 
+## 11b. Post-holdout add-on search (phase P6, exploratory, not pre-registered)
+
+Client ask after the extension: find one new angle (buy-the-dip, a GLD/SLV sleeve, or bonds) that lifts CAGR by 1-2% and MAR by 0.1-0.25 over 1991-2026. Method: 1990-start panel, development on 1991-2015, confirmation on 2016-2026 (a pseudo-holdout: that window was already seen once in phase 4), selection rule fixed in the script docstring before running (best design-window MAR subject to CAGR >= TALOS, kept only if it beats TALOS on both metrics in both windows). 129 cells logged as phase P6 in the ledger, excluded from the deflated-Sharpe count of the frozen system. Scripts `src/system2.py`, `src/run_phase6*.py`; outputs `reports/phase6/`.
+
+What each family did (1x, 1991-2026 unless stated):
+
+- **Bonds (residual deployment).** Putting the core's idle cash (35% of the sleeve on average) into trend-gated TLT or IEF adds 1.2% CAGR in 1991-2015 and loses 1.1% in 2016-2026 (2022). Not robust; rejected.
+- **Buy the dip, fixed size.** Holding QQQ at 100% of the sleeve for 5 days after a 5-day low while above the 200d SMA adds 3.3% CAGR but doubles the worst drawdown (25% at the 2000 top). Rejected.
+- **Buy the dip, vol-scaled.** Same trigger with a 10-day low, but the boost is min(1, 2 x the vol-target size) for 5 days. The only single add-on that beats TALOS on both metrics in both windows. Full window: CAGR +1.6% (11.9%), MAR +0.02 (0.68), worst drawdown 17.4% vs 15.5%. Sharpe 0.78 vs 0.75.
+- **Gold sleeve.** 30% of capital in GLD when above its 200d SMA, sized 10%/vol20. Alone it cuts drawdown to 12.7% but costs 1.4% CAGR. Adding silver (SIUSD spot + carry proxy, spliced to SLV) is worse than gold alone in every cell (`reports/phase6/metals.csv`); silver rejected.
+- **Vol-scaled dip + gold sleeve, then the exposure multiplier** (frontier comparison at matched drawdown, `reports/phase6/frontier.csv`): this is the best combination found.
+
+| 1991-2026 | CAGR | Vol | Sharpe | MaxDD | MAR | Trades/yr |
+|---|---|---|---|---|---|---|
+| TALOS 1x | 10.3% | 10.2% | 0.75 | -15.5% | 0.67 | 74 |
+| TALOS + dip + gold, 1x | 10.0% | 9.1% | 0.80 | -13.2% | 0.76 | 92 |
+| TALOS + dip + gold, 1.25x | 11.4% | 10.9% | 0.80 | -15.3% | 0.75 | 106 |
+| TALOS + dip + gold, 1.5x | 12.2% | 12.2% | 0.79 | -16.6% | 0.74 | 126 |
+| TALOS 2.5x | 15.6% | 17.9% | 0.75 | -25.6% | 0.61 | 130 |
+| TALOS + dip + gold, 2.5x | 14.6% | 15.3% | 0.79 | -23.6% | 0.62 | 175 |
+
+Against the target, measured at the same worst drawdown as TALOS 1x (the 1.25x row): CAGR +1.1% (met), MAR +0.08 (just short of +0.10). In the two windows separately: design +1.0% / +0.07, confirmation +1.4% / +0.11. The 1.5x row gives +1.9% CAGR at MAR +0.07 with a 1.1-point deeper drawdown. Above 1.5x the add-on stops paying: at 2.5x it lowers CAGR (the gold sleeve displaces levered equity) while MAR is unchanged.
+
+Costs of adopting it: five more parameters (13 total); trades rise from 74 to 106 a year and next-day round trips from 6 to 9; at 1.25x the QQQ core uses TQQQ for the part of its exposure above 1x; and the confirmation window is not a clean holdout, so the +0.11 MAR there carries the same selection risk as any in-sample number. The dip parameters sit on a smooth region of the grid (neighbouring cells 0.65-0.70 design MAR against 0.72 at the chosen cell and 0.62 for TALOS), which is the main reason to believe the improvement is not a single lucky cell. The add-on is a candidate, not adopted into TALOS; RULES.md and daily_signal.py are unchanged.
+
 ## 12. Files
 
-`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `daily_signal.py`, `src/` (engine, strategies, system, trials, run_phase3*.py, run_holdout.py), `tests/test_engine.py` (9 passing), `reports/phase3/summary.md`, `reports/holdout/`, `src/run_extension.py` and `reports/extension/` (post-holdout 1991 extension, section 11a).
+`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `daily_signal.py`, `src/` (engine, strategies, system, trials, run_phase3*.py, run_holdout.py), `tests/test_engine.py` (9 passing), `reports/phase3/summary.md`, `reports/holdout/`, `src/run_extension.py` and `reports/extension/` (post-holdout 1991 extension, section 11a), `src/system2.py`, `src/run_phase6*.py` and `reports/phase6/` (add-on search, section 11b).
 

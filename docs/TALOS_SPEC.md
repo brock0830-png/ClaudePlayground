@@ -1,4 +1,4 @@
-# TALOS — full specification of the tactical IRA system (v1, 2026-09-19)
+# TALOS — full specification of the tactical IRA system (v1.1, 2026-09-19)
 
 **Why the name.** Talos was the bronze automaton of Crete: a machine that patrolled the island's coast on a fixed daily circuit, applying the same rule every day without judgement or fatigue. This system is exactly that: one mechanical patrol of six closing prices after every close, no discretion, no news, no intraday input.
 
@@ -174,3 +174,23 @@ In the repo: `python daily_signal.py --lever 1.0 --holdings holdings.json` print
 ## 9. File map in the repository
 
 `DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/*.png`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `REPORT.md`, `daily_signal.py`, `src/` (`data.py`, `proxies.py`, `engine.py`, `metrics.py`, `strategies.py`, `system.py`, `trials.py`, `run_phase3*.py`, `run_holdout.py`, `run_extension.py`, `fmp_ingest.py`, `transcript_harvest.py`), `tests/test_engine.py`, `reports/phase3/`, `reports/holdout/`, `reports/extension/`, `data/proxies/` (frozen 1997 panel, committed), `data/proxies_ext/` (1990 panel, committed), `data/raw/fmp/*.parquet` (not committed; rebuild from FMP as in §3).
+
+---
+
+## Appendix A (v1.1, 2026-09-19): candidate add-on from the phase P6 search, not adopted
+
+After freezing TALOS the client asked for a new angle that raises CAGR by 1-2% and MAR by 0.1-0.25 over 1991-2026. Searched (129 logged cells, design 1991-2015, confirmation 2016-2026, both on the 1990-start proxy panel): trend-gated bond deployment of the core's idle cash (rejected: gains in 1991-2015 reverse after 2016), fixed-size buy-the-dip (rejected: doubles the 2000 drawdown), gold and gold+silver sleeves (silver rejected in every cell), and a vol-scaled buy-the-dip. Best combination found, exact rules:
+
+1. **Dip boost inside Sleeve A.** If QQQ is above its 200d SMA and today's close is the lowest of the last 10 closes, then for the next 5 trading days (inclusive of today's signal) the QQQ exposure of the sleeve is `max(vol-target size, min(1, 2 x vol-target size))`. While QQQ is below its SMA nothing changes.
+2. **Sleeve C, gold, 30% of capital**, funded by scaling Sleeves A and B to 70% x 0.7 and 30% x 0.7 of capital. Each day: if GLD close > its 200d SMA hold GLD at `min(1, 0.10 / vol20_GLD)` of the sleeve, else cash. Never levered above 1x GLD (no UGL).
+3. Everything else as in Sections 2.4-2.7, exposure multiplier 1.25 recommended (1.0 for a no-leverage version).
+
+Results (net, 1991-2026; TALOS 1x for comparison 10.3% / -15.5% / 0.67):
+
+| Multiplier | CAGR | Vol | Sharpe | MaxDD | MAR | Trades/yr |
+|---|---|---|---|---|---|---|
+| 1.0 | 10.0% | 9.1% | 0.80 | -13.2% | 0.76 | 92 |
+| 1.25 | 11.4% | 10.9% | 0.80 | -15.3% | 0.75 | 106 |
+| 1.5 | 12.2% | 12.2% | 0.79 | -16.6% | 0.74 | 126 |
+
+Design window 1991-2015 at 1.25x: 10.6% / -15.3% / 0.70 vs TALOS 9.6% / -15.5% / 0.62. Confirmation 2016-2026 at 1.25x: 13.2% / -14.2% / 0.93 vs TALOS 11.8% / -14.4% / 0.82. So at matched drawdown the add-on gives about +1.1% CAGR and +0.08 MAR (target was +1-2% and +0.1-0.25). Five extra parameters (13 total). The confirmation window is a pseudo-holdout (seen once in phase 4); treat the numbers as in-sample. Files: `src/system2.py`, `src/run_phase6*.py`, `reports/phase6/summary.md`, ledger phase P6.
