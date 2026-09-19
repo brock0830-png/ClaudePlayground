@@ -48,6 +48,7 @@ class Result:
     turnover: pd.Series         # one-way turnover per day (sum |trade|)
     costs: pd.Series
     trades: pd.Series           # number of instruments traded per day
+    deltas: pd.DataFrame        # signed weight change executed per instrument per day
     gross_leverage: pd.Series   # sum(w_i * L_i)
     lag: int
 
@@ -82,6 +83,7 @@ def run(target: pd.DataFrame, rets: pd.DataFrame, cash: pd.Series, cost: CostMod
     turnover = np.zeros(n)
     costs = np.zeros(n)
     trades = np.zeros(n)
+    deltas = np.zeros((n, k))
     w_prev = np.zeros(k)         # weights at close of previous day, after drift
     for i in range(n):
         # weights in force during day i are those set at the close of day i-1
@@ -103,6 +105,7 @@ def run(target: pd.DataFrame, rets: pd.DataFrame, cash: pd.Series, cost: CostMod
             trade_cost = float(np.abs(delta) @ unit_cost)
             turnover[i] = float(np.abs(delta).sum())
             trades[i] = int((np.abs(delta) > 1e-12).sum())
+            deltas[i] = delta
             costs[i] = trade_cost
             port[i] = gross - trade_cost
             w_prev = w_new
@@ -113,5 +116,5 @@ def run(target: pd.DataFrame, rets: pd.DataFrame, cash: pd.Series, cost: CostMod
     ret = pd.Series(port, idx, name="ret")
     return Result(returns=ret, equity=(1 + ret).cumprod(),
                   weights_held=pd.DataFrame(held, idx, cols), turnover=pd.Series(turnover, idx),
-                  costs=pd.Series(costs, idx), trades=pd.Series(trades, idx),
+                  costs=pd.Series(costs, idx), trades=pd.Series(trades, idx), deltas=pd.DataFrame(deltas, idx, cols),
                   gross_leverage=pd.Series(held @ L, idx), lag=lag)
