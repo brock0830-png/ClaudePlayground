@@ -2,7 +2,7 @@
 
 **Why the name.** Talos was the bronze automaton of Crete: a machine that patrolled the island's coast on a fixed daily circuit, applying the same rule every day without judgement or fatigue. This system is exactly that: one mechanical patrol of six closing prices after every close, no discretion, no news, no intraday input.
 
-This document is written so that a future thread with no memory of this one can rebuild the system, its data, its backtest and its numbers from scratch. Everything below was computed in the build session; nothing is quoted from outside sources. The code lives in GitHub repository `brock0830-png/ClaudePlayground`, branch `claude/building-session-0uw42p` (commit `07d4616` at the time of writing); this document is self-sufficient without it.
+This document is written so that a future thread with no memory of this one can rebuild the system, its data, its backtest and its numbers from scratch. Everything below was computed in the build session; nothing is quoted from outside sources. The code lives in GitHub repository `brock0830-png/ClaudePlayground`, branch `claude/building-session-0uw42p` (commit `8427dde` at the time of writing); this document is self-sufficient without it. v1.1 adds Appendix A (candidate add-on, not adopted); Sections 1-9 are unchanged from v1.
 
 ---
 
@@ -97,7 +97,7 @@ There is no drawdown-control overlay, no VIX input, no intraday logic, no option
 
 ### 3.1 Sources actually used
 - **FMP (Financial Modeling Prep) dividend-adjusted daily closes** for every ETF: SPY, QQQ, IWM, DIA, TLT, IEF, SHY, BIL, SHV, GLD, SLV, DBC, USO, EDV, SSO, QLD, UPRO, TQQQ, SPXL, TMF, UBT, UST, UGL, SH, SDS, SPXU, PSQ, QID, SQQQ, TBT, TMV. Cross-checked against the Norgate total-return export on the two ETFs that could be loaded: agreement within 2–6 bp/yr.
-- **FMP price indexes**: ^GSPC (from 1990), ^NDX (1985-10 → 2023-05-23 in the pull), ^RUT (1990), ^VIX (1990), GCUSD gold spot (1980).
+- **FMP price indexes**: ^GSPC (from 1990), ^NDX (1985-10 → 2023-05-23 in the pull), ^RUT (1990), ^VIX (1990), GCUSD gold spot (1980), SIUSD silver spot (1990-02, used only in Appendix A).
 - **FMP US Treasury constant-maturity yields** (1m…30y): 1990-01 → 2007-06 daily (paged quarterly; the endpoint returns ~63 rows per call), plus later spot checks. 20y yield is missing before 1993-10.
 - FMP chart endpoints cap at 5000 rows per call; paginate by date.
 
@@ -137,6 +137,7 @@ No-lookahead tests (`tests/test_engine.py`, 9 tests): base lag is two days; the 
 2. Phase 3 development on **1998-01-02 → 2015-12-31 only**: 228 distinct trials, every one logged with parameters and metrics to `TRIAL_LEDGER.csv` (498 rows including annotated superseded/duplicate rows). Baselines: SPY, 60/40, SPY 200-day timing, vol-targeted SPY.
 3. Phase 4 freeze (commit `06a6f79`), one-shot holdout run guarded by `HOLDOUT_UNLOCKED` + `RAN_ONCE` files; deflated Sharpe with the full trial count.
 4. Phase 5 (post-holdout, exploratory, clearly labelled): history extension to 1991 on the 1990-start panel, logged as phase P5 and excluded from the DSR count.
+5. Phase 6 (post-holdout, exploratory): add-on search, Appendix A; logged as phase P6, excluded from the DSR count.
 
 Disclosed deviations: the core's IEF-fallback overlay was chosen on a best cell, not a median cell; the 2% band was added after seeing 754 trades/yr unbanded (changed CAGR by 0.0% and MAR by 0.001 in design); k=3 kept over k=2 to avoid a second best-cell pick.
 
@@ -173,7 +174,7 @@ In the repo: `python daily_signal.py --lever 1.0 --holdings holdings.json` print
 
 ## 9. File map in the repository
 
-`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/*.png`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `REPORT.md`, `daily_signal.py`, `src/` (`data.py`, `proxies.py`, `engine.py`, `metrics.py`, `strategies.py`, `system.py`, `trials.py`, `run_phase3*.py`, `run_holdout.py`, `run_extension.py`, `fmp_ingest.py`, `transcript_harvest.py`), `tests/test_engine.py`, `reports/phase3/`, `reports/holdout/`, `reports/extension/`, `data/proxies/` (frozen 1997 panel, committed), `data/proxies_ext/` (1990 panel, committed), `data/raw/fmp/*.parquet` (not committed; rebuild from FMP as in §3).
+`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/*.png`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `REPORT.md`, `daily_signal.py`, `src/` (`data.py`, `proxies.py`, `engine.py`, `metrics.py`, `strategies.py`, `system.py`, `system2.py`, `trials.py`, `run_phase3*.py`, `run_holdout.py`, `run_extension.py`, `run_phase6*.py`, `fmp_ingest.py`, `transcript_harvest.py`), `tests/test_engine.py`, `reports/phase3/`, `reports/holdout/`, `reports/extension/`, `reports/phase6/`, `data/proxies/` (frozen 1997 panel, committed), `data/proxies_ext/` (1990 panel, committed), `data/raw/fmp/*.parquet` (not committed; rebuild from FMP as in §3).
 
 ---
 
