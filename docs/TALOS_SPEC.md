@@ -1,95 +1,95 @@
-# TALOS — full specification of the tactical IRA system (v1.2, 2026-09-19)
+# TALOS — full specification of the tactical IRA system (v2 = configuration T7, 2026-09-19)
 
 **Why the name.** Talos was the bronze automaton of Crete: a machine that patrolled the island's coast on a fixed daily circuit, applying the same rule every day without judgement or fatigue. This system is exactly that: one mechanical patrol of six closing prices after every close, no discretion, no news, no intraday input.
 
-This document is written so that a future thread with no memory of this one can rebuild the system, its data, its backtest and its numbers from scratch. Everything below was computed in the build session; nothing is quoted from outside sources. The code lives in GitHub repository `brock0830-png/ClaudePlayground`, branch `claude/building-session-0uw42p` (commit `8427dde` at the time of writing); this document is self-sufficient without it. v1.1 added Appendix A (candidate add-on) and v1.2 adds Appendix B (candidate T7); neither is adopted; Sections 1-9 are unchanged from v1.
+This document is written so that a future thread with no memory of this one can rebuild the system, its data, its backtest and its numbers from scratch. Everything below was computed in the build session; nothing is quoted from outside sources and nothing was taken from any other system. The code lives in GitHub repository `brock0830-png/ClaudePlayground`, branch `claude/building-session-0uw42p` (commit `7c205a3` at the time of writing); this document is self-sufficient without it. **v2 adopts T7 as the live rules** (client decision 2026-09-19); the pre-registered v1 rules and their clean holdout are kept in Appendix A. This file supersedes TALOS_SPEC v1, v1.1 and v1.2.
 
 ---
 
-## 1. Objective and verdict
+## 1. Objective, verdict, and what the evidence is worth
 
-Client objective: CAGR ≥ 15% with MAR (CAGR ÷ |MaxDD|) ≥ 1.0, stretch 1.25, in a US self-directed IRA (long-only, no margin borrowing, no shorting; leveraged and inverse ETFs allowed as long positions; T+1 settlement, no limited margin required).
+Client objective: CAGR ≥ 15% with MAR (CAGR ÷ |MaxDD|) ≥ 1.0, stretch 1.25, in a US self-directed IRA (long-only, no margin borrowing, no shorting; leveraged ETFs allowed as long positions; T+1 settlement, no limited margin).
 
-Verdict: **not met on any window longer than a decade.** What TALOS delivers instead (all figures net of costs, execution one full day after the signal):
+Verdict: **not met on any window longer than a decade** by any configuration. Net results (execution one full day after the signal, 2 bp + half spread per trade, doubled on leveraged funds):
 
 | Window | Config | CAGR | Vol | Sharpe | MaxDD | MAR | Trades/yr |
 |---|---|---|---|---|---|---|---|
-| 1998-01-02 → 2026-09-18 | TALOS 1x | 9.7% | 10.2% | 0.75 | -15.5% | 0.63 | 75 |
-| 1998-01-02 → 2026-09-18 | TALOS 2.5x | 14.6% | 17.9% | 0.73 | -25.6% | 0.57 | 132 |
-| 1998-01-02 → 2026-09-18 | SPY buy-and-hold | 9.3% | 19.3% | 0.44 | -55.2% | 0.17 | 0 |
-| 2016-01-04 → 2026-09-18 (locked holdout, one shot) | TALOS 1x | 11.8% | 10.2% | 0.93 | -14.4% | 0.82 | 74 |
-| 2016-01-04 → 2026-09-18 | TALOS 2.5x | 17.7% | 17.3% | 0.90 | -25.3% | 0.70 | 130 |
-| 1991-01-04 → 2026-09-18 (post-holdout proxy extension) | TALOS 1x | 10.3% | 10.2% | 0.75 | -15.5% | 0.66 | 74 |
-| 1991-01-04 → 2026-09-18 | TALOS 2.5x | 15.6% | 17.9% | 0.75 | -25.6% | 0.61 | 130 |
+| 1991-01-04 → 2026-09-18 | **TALOS v2 (T7) 1.25x** | 11.7% | 11.1% | 0.81 | -14.0% | 0.83 | 100 |
+| 1991-01-04 → 2026-09-18 | TALOS v2 (T7) 1.0x (no leveraged funds) | 10.2% | 9.2% | 0.81 | -11.3% | 0.91 | 85 |
+| 1991-01-04 → 2015-12-31 | TALOS v2 (T7) 1.25x | 11.1% | 11.0% | 0.72 | -13.9% | 0.79 | — |
+| 2016-01-04 → 2026-09-18 | TALOS v2 (T7) 1.25x | 13.1% | 11.4% | 0.99 | -13.2% | 1.00 | — |
+| 1991-01-04 → 2026-09-18 | TALOS v1 1x | 10.3% | 10.2% | 0.75 | -15.5% | 0.67 | 74 |
+| 1998-01-02 → 2026-09-18 | TALOS v1 1x | 9.7% | 10.2% | 0.75 | -15.5% | 0.63 | 75 |
+| 2016-01-04 → 2026-09-18 (locked one-shot holdout) | TALOS v1 1x | 11.8% | 10.2% | 0.93 | -14.4% | 0.82 | 74 |
+| 1991-01-04 → 2026-09-18 | TALOS v1 2.5x | 15.6% | 17.9% | 0.75 | -25.6% | 0.61 | 130 |
 | 1991-01-04 → 2026-09-18 | SPY buy-and-hold | 11.3% | 18.2% | 0.53 | -55.2% | 0.21 | 0 |
 
-Deflated Sharpe (Bailey & López de Prado, 228 distinct design-phase trials, expected max null Sharpe 0.54 annualised): probability that the 1x Sharpe beats the best-of-trials null is 0.66 in the design window, 0.89 in the holdout, 0.86 over 1998-2026 (`reports/holdout/deflated_sharpe.json`). The worst calendar year at 1x is 2022 (-9.8%); at 2.5x it is 2022 (-20.4%).
+**Evidence quality, stated plainly.** Only v1 has clean out-of-sample evidence: its rules were frozen on 1998-2015 and run once on 2016-2026 (deflated-Sharpe probability of beating the best-of-228-trials null: 0.89 in the holdout). Every v2 number is in-sample: the dip boost, gold sleeve, gate band and 250-day length were chosen after the holdout, with the full 1991-2026 record in view, using a 1991-2015 / 2016-2026 split that is a pseudo-holdout at best. What supports v2 beyond its numbers: the improvement over v1 has the same sign and size in both halves; the 20-cell parameter neighbourhood (gate band 0.5-2%, trend 200-300 days) gives full-window MAR 0.68-0.86 and CAGR 11.1-12.0%, all above v1; each added component is a standard, economically motivated rule (trend hysteresis, vol-scaled dip buying, trend-gated gold). The v2 results above 1.5x converge to v1's (identical worst drawdowns), so the multiplier should stay at 1.25 or below.
 
 ---
 
-## 2. The rules (complete)
+## 2. The rules (complete, TALOS v2 = T7)
 
 One decision per trading day, after the close, from **dividend-adjusted closing prices**. Orders are executed at the **next day's close** (in the backtest, a target decided at close t is filled at close t+1 and first earns the return from close t+1 to close t+2).
 
 ### 2.1 Instruments
 
-Underlyings: **QQQ, SPY, IWM, TLT, IEF, GLD**, plus a cash sleeve (BIL, SHV or a same-day-settling money-market fund).
-Leveraged expressions used only when the exposure multiplier is above 1.0: TQQQ (3x QQQ), UPRO (3x SPY), TMF (3x TLT), UST (2x IEF), UGL (2x GLD). IWM has no leveraged fund in the set, so its exposure is capped at 1x. No inverse funds (every inverse variant tested lost money).
+Underlyings: **QQQ, SPY, IWM, TLT, IEF, GLD**, plus a cash sleeve (BIL, SHV or a same-day-settling money-market fund). Leveraged expressions used only when the exposure multiplier is above 1.0: TQQQ (3x QQQ), UPRO (3x SPY), TMF (3x TLT), UST (2x IEF). At the recommended 1.25x only TQQQ is ever used. The gold sleeve is never levered (no UGL). IWM has no leveraged fund and is capped at 1x. No inverse funds.
 
-### 2.2 Sleeve A — equity core, 70% of capital
+### 2.2 Sleeve A — equity core, 49% of capital (= 70% × 0.7)
 
 Each day compute for QQQ:
-- `SMA200` = simple average of the last 200 adjusted closes (needs 200 observations; before that the sleeve is cash).
+- `SMA250` = simple average of the last 250 adjusted closes (before 250 observations exist the sleeve is cash).
 - `vol20` = standard deviation of the last 20 daily simple returns × √252.
+- **Gate with hysteresis:** `gate = ON` if `close > 1.01 × SMA250`; `gate = OFF` if `close < 0.99 × SMA250`; otherwise `gate = yesterday's gate` (initial state OFF).
+- `size = min(1, 0.10 / vol20)`.
+- **Dip trigger:** `dip = (gate is ON) and (close ≤ min of the last 10 closes, today included)`. **Boost is active** on any day where a dip trigger occurred on that day or any of the previous 4 trading days, provided the gate is ON today.
 
 Then:
-- If `close_QQQ > SMA200_QQQ`: exposure to QQQ = `min(1, 0.10 / vol20)` of the sleeve. Remainder of the sleeve in cash.
-- Else (QQQ at or below its SMA200): QQQ exposure 0. If `close_IEF > SMA200_IEF` hold 100% of the sleeve in IEF, otherwise 100% of the sleeve in cash.
+- Gate ON, boost inactive: QQQ exposure = `size` of the sleeve; remainder cash.
+- Gate ON, boost active: QQQ exposure = `max(size, min(1, 2 × size))` of the sleeve; remainder cash.
+- Gate OFF: QQQ exposure 0. If `close_IEF > SMA250_IEF` hold 100% of the sleeve in IEF, otherwise cash.
 
-### 2.3 Sleeve B — momentum rotation, 30% of capital
+### 2.3 Sleeve B — momentum rotation, 21% of capital (= 30% × 0.7)
 
 On the **last trading day of each calendar month** only:
-- For each of SPY, QQQ, IWM, TLT, GLD compute `mom = TR_index_today / TR_index_126_trading_days_ago − 1` (126-day total return).
-- Compute the same 126-day return of the cash sleeve.
-- Rank the five by `mom`, take the top **3**. Each of the three whose `mom` is **not greater than** cash's 126-day return is replaced by cash.
-- Hold the survivors at **1/3 of the sleeve each** (so the sleeve can be 0%, 33%, 67% or 100% invested) until the next month-end signal. If any of the five lacks 126 days of history the previous month's weights are carried forward (at the start, the sleeve is cash).
+- For each of SPY, QQQ, IWM, TLT, GLD compute `mom = TR_index_today / TR_index_126_trading_days_ago − 1` (126-day total return), and the same for cash.
+- Rank the five, take the top **3**; each whose `mom` is not greater than cash's is replaced by cash.
+- Hold survivors at **1/3 of the sleeve each** until the next month-end signal. If any asset lacks 126 days of history, carry the previous month's weights (at the start, the sleeve is cash).
 
-### 2.4 Blend, exposure multiplier, and mapping to funds
+### 2.4 Sleeve C — gold, 30% of capital
 
-Target exposure per underlying (in units of the underlying):
-`E_u = 0.70 × coreExposure_u + 0.30 × rotationExposure_u` (core contributes only to QQQ and IEF).
+Each day: if `close_GLD > SMA250_GLD` hold GLD at `min(1, 0.10 / vol20_GLD)` of the sleeve (vol20 of GLD's daily returns, annualised); otherwise the sleeve is cash.
 
-Multiply every `E_u` by the **exposure multiplier m** (1.0 base; 2.5 is the 25%-drawdown frontier point; 3.0 is the maximum the fund set allows).
+### 2.5 Blend, exposure multiplier, and mapping to funds
 
-Map each `m·E_u` to fund weights (fractions of account equity), per underlying:
-- If `m·E_u ≤ 1`: hold `m·E_u` in the 1x fund.
-- If `1 < m·E_u ≤ L` where L is the leverage of the biggest fund for that underlying (3 for QQQ, SPY, TLT; 2 for IEF, GLD; 1 for IWM): weight in the L-x fund `b = (m·E_u − 1)/(L − 1)`, weight in the 1x fund `1 − b`. (So fund weights for one underlying always sum to ≤ 1 and the combination delivers exactly `m·E_u` of exposure.)
-- If `m·E_u > L`: capped at the L-x fund at 100% (exposure L).
+Exposure per underlying (units of the underlying): `E_u = 0.49 × coreExposure_u + 0.21 × rotationExposure_u + 0.30 × goldExposure_u` (core contributes to QQQ and IEF; gold sleeve to GLD only).
 
-If the fund weights across all underlyings sum to more than 1, scale all of them down proportionally so they sum to exactly 1. Cash = 1 − sum of fund weights. **No borrowing ever.**
+Multiply every `E_u` by the **exposure multiplier m = 1.25** (or 1.0 for no leveraged funds). Map each `m·E_u` to fund weights per underlying:
+- `m·E_u ≤ 1`: hold `m·E_u` in the 1x fund.
+- `1 < m·E_u ≤ L` (L = 3 for QQQ/SPY/TLT, 2 for IEF, 1 for IWM and, by rule, GLD): weight in the L-x fund `b = (m·E_u − 1)/(L − 1)`, in the 1x fund `1 − b`.
+- `m·E_u > L`: 100% in the L-x fund.
+If all fund weights sum to more than 1, scale them down proportionally to sum to 1. Cash = 1 − sum. **No borrowing.** At m = 1.25 the only case above 1x is QQQ (max `m·E_u` = 1.25 × (0.49 + 0.07) = 0.70 from the core plus rotation… in practice ≤ 0.79), so the mapping only ever puts part of the QQQ exposure in TQQQ.
 
-### 2.5 Rebalance band
+### 2.6 Rebalance band
 
-Each day compare each fund's target weight with its current (drifted) weight. Trade the fund only if `|target − current| > 2%` of account equity; otherwise leave it. This is what keeps trades near 75/yr at 1x and next-day round trips near 6/yr, so no limited margin is needed.
+Each day compare each fund's target weight with its current drifted weight; trade only if `|target − current| > 2%` of account equity.
 
-### 2.6 The eight free parameters (all fixed)
+### 2.7 The fourteen parameters (all fixed)
 
-| # | Parameter | Value |
-|---|---|---|
-| 1 | Trend length (QQQ gate and IEF gate) | 200 days |
-| 2 | Core volatility target | 10% annualised |
-| 3 | Volatility window | 20 days |
-| 4 | Rotation lookback | 126 trading days |
-| 5 | Rotation holdings | top 3 of 5 |
-| 6 | Core weight in the blend | 0.70 |
-| 7 | Rebalance band | 2% of equity |
-| 8 | Exposure multiplier | 1.0 (or 2.5 / 3.0) |
+| # | Parameter | Value | # | Parameter | Value |
+|---|---|---|---|---|---|
+| 1 | Trend length (QQQ, IEF, GLD gates) | 250 days | 8 | Rotation lookback | 126 days |
+| 2 | Gate hysteresis band | 1% | 9 | Rotation holdings | top 3 of 5 |
+| 3 | Core vol target | 10% | 10 | Core : rotation split | 70 : 30 |
+| 4 | Vol window | 20 days | 11 | Gold sleeve weight | 30% |
+| 5 | Dip lookback | 10 days | 12 | Gold vol target | 10% |
+| 6 | Dip hold | 5 days | 13 | Rebalance band | 2% |
+| 7 | Dip multiplier | 2× | 14 | Exposure multiplier | 1.25 |
 
-There is no drawdown-control overlay, no VIX input, no intraday logic, no options.
+### 2.8 Costs assumed in every reported figure
 
-### 2.7 Costs assumed in every reported figure
-
-2 bp commission + half the bid-ask spread per trade side (half-spread defaults: 1 bp for liquid ETFs; per-instrument values in `src/trials.py` `HALF_SPREAD`), doubled for leveraged funds. Sensitivities: zero costs and 3× costs are in the ledger.
+2 bp commission + half the bid-ask spread per trade side (1 bp default half-spread for liquid ETFs; per-instrument values in `src/trials.py`), doubled for leveraged funds. Sensitivities at 1.25x over 1991-2026: zero costs MAR 0.87, triple costs 0.76, one extra day of delay 0.80, same-close fill 0.68.
 
 ---
 
@@ -97,7 +97,7 @@ There is no drawdown-control overlay, no VIX input, no intraday logic, no option
 
 ### 3.1 Sources actually used
 - **FMP (Financial Modeling Prep) dividend-adjusted daily closes** for every ETF: SPY, QQQ, IWM, DIA, TLT, IEF, SHY, BIL, SHV, GLD, SLV, DBC, USO, EDV, SSO, QLD, UPRO, TQQQ, SPXL, TMF, UBT, UST, UGL, SH, SDS, SPXU, PSQ, QID, SQQQ, TBT, TMV. Cross-checked against the Norgate total-return export on the two ETFs that could be loaded: agreement within 2–6 bp/yr.
-- **FMP price indexes**: ^GSPC (from 1990), ^NDX (1985-10 → 2023-05-23 in the pull), ^RUT (1990), ^VIX (1990), GCUSD gold spot (1980), SIUSD silver spot (1990-02, used only in Appendix A).
+- **FMP price indexes**: ^GSPC (from 1990), ^NDX (1985-10 → 2023-05-23 in the pull), ^RUT (1990), ^VIX (1990), GCUSD gold spot (1980), SIUSD silver spot (1990-02, used only in the rejected silver test).
 - **FMP US Treasury constant-maturity yields** (1m…30y): 1990-01 → 2007-06 daily (paged quarterly; the endpoint returns ~63 rows per call), plus later spot checks. 20y yield is missing before 1993-10.
 - FMP chart endpoints cap at 5000 rows per call; paginate by date.
 
@@ -131,92 +131,55 @@ No-lookahead tests (`tests/test_engine.py`, 9 tests): base lag is two days; the 
 
 ---
 
-## 5. Process discipline used (so a rebuild can be judged)
+## 5. Process discipline and where the biases are
 
-1. Phase 0 data audit; Phase 1 proxies + engine + tests; Phase 2 pre-registration of hypotheses H1–H12, parameter grids, gates P1–P5, cost model, holdout lock (2016-01-04 → 2026-09-18) written **before** any trial.
-2. Phase 3 development on **1998-01-02 → 2015-12-31 only**: 228 distinct trials, every one logged with parameters and metrics to `TRIAL_LEDGER.csv` (498 rows including annotated superseded/duplicate rows). Baselines: SPY, 60/40, SPY 200-day timing, vol-targeted SPY.
-3. Phase 4 freeze (commit `06a6f79`), one-shot holdout run guarded by `HOLDOUT_UNLOCKED` + `RAN_ONCE` files; deflated Sharpe with the full trial count.
-4. Phase 5 (post-holdout, exploratory, clearly labelled): history extension to 1991 on the 1990-start panel, logged as phase P5 and excluded from the DSR count.
-5. Phase 6 (post-holdout, exploratory): add-on search, Appendix A; logged as phase P6, excluded from the DSR count.
+1. Phase 0 data audit; Phase 1 proxies + engine + tests; Phase 2 pre-registration of hypotheses H1–H12, parameter grids, gates, cost model and the holdout lock (2016-01-04 → 2026-09-18), written before any trial.
+2. Phase 3 development on **1998-01-02 → 2015-12-31 only**: 228 distinct trials, every one logged to `TRIAL_LEDGER.csv`. Baselines: SPY, 60/40, SPY 200-day timing, vol-targeted SPY.
+3. Phase 4 freeze (commit `06a6f79`), one-shot holdout guarded by `HOLDOUT_UNLOCKED` + `RAN_ONCE`; deflated Sharpe with the full trial count. → **TALOS v1.**
+4. Phase 5: history extension to 1991 on a 1990-start proxy panel (phase P5 in the ledger). Phases 6-7: add-on search and free-rein ideas on 1991-2015 / 2016-2026 (phases P6-P7, 129 + ~200 cells). → **T7 = TALOS v2**, adopted by the client.
 
-Disclosed deviations: the core's IEF-fallback overlay was chosen on a best cell, not a median cell; the 2% band was added after seeing 754 trades/yr unbanded (changed CAGR by 0.0% and MAR by 0.001 in design); k=3 kept over k=2 to avoid a second best-cell pick.
+Biases to know about, in order of importance:
+- **Asset-selection hindsight.** QQQ as the core, gold as a sleeve, and Treasuries as the fallback were chosen knowing how those assets did over 1991-2026. A 1991 investor did not know the Nasdaq 100 would compound at ~13%/yr or that gold would triple after 2005. This is the largest bias and it affects v1 and v2 equally; no backtest on this history can remove it.
+- **Component priors.** Trend gates, vol targeting, dual momentum and dip buying were pre-registered because they are known from public research to have worked on this same history. The pre-registration limits fishing inside the session, not the fact that the hypotheses came pre-fitted to the past.
+- **Post-holdout selection (v2 only).** The dip, gold, band and 250-day choices were made after the one-shot holdout, with the full record in view, and the "both metrics in both windows" rule was widened once (disclosed) to admit the band and 250-day changes. v2's figures are in-sample.
+- **Proxy calibration.** Pre-inception ETF carries and leveraged-fund financing spreads were calibrated on the live overlap, so the proxy eras are fitted to the ETF eras by construction (±1%/yr sensitivity in the ledger).
+- **Disclosed v1 deviations:** the core's IEF-fallback overlay was chosen on a best cell; the 2% band was added after seeing 754 trades/yr unbanded; k=3 kept over k=2 to avoid a second best-cell pick.
 
----
-
-## 6. What was tried and rejected (design window unless noted)
-
-- Inverse and leveraged-inverse funds in any sleeve: lost money in every cell.
-- Drawdown-control overlay (halve exposure below −10% from peak, restore at −5%): MAR +0.02, CAGR −0.5%, one more parameter. Dropped.
-- VIX-based overlays, short-term reversal overlay: no MAR improvement worth a parameter.
-- Rotation k=2: slightly higher MAR in one comparison; not adopted.
-- Higher exposure multipliers: Sharpe flat (0.64–0.67), MAR falls monotonically from 0.63 to 0.56; all extra CAGR is leverage.
-- Bond fallback to cash instead of IEF: lower CAGR and MAR.
+No file from the Drive `RESEARCH_LIBRARY`, no file with a forbidden name, and no other strategy document on the Drive was opened; only file titles in the Drive root were listed to choose a name that was not taken. No external strategy's rules or returns were looked up.
 
 ---
 
-## 7. Behaviour to expect live (from the record)
+## 6. What was tried and rejected
 
-- Roughly matches SPY's return at 1x with half to two thirds of SPY's drawdown; falls behind buy-and-hold in calm low-vol bull markets (1995–97, 2019), pulls ahead in bears it can sidestep (2000–02, 2008), and loses in years where equities and bonds fall together with whipsaw trends (1994: −1.5%; 2022: −9.8%; 2005: −6.9%; 2015: −6.3%).
-- Three things most likely to break it: (1) a grinding QQQ bear with bonds falling too, because the fallback is IEF; (2) leveraged-fund mechanics above 1x (UGL, UST, UBT fail a $1M liquidity screen; simulated history ±1%/yr); (3) data/execution drift on marginal 200-day-gate days.
-- Settlement: keep cash in a same-day money fund; on the rare next-day cut, sell only settled shares. No limited margin needed at 1x or 2.5x.
+v1 design (1998-2015): inverse and leveraged-inverse funds (lost money in every cell); drawdown-control overlay (MAR +0.02 for CAGR −0.5%); VIX overlays and short-term reversal; rotation k=2; higher multipliers (all extra CAGR is leverage, MAR falls); cash instead of IEF fallback.
+Post-holdout (1991-2015 / 2016-2026): trend-gated bonds in the core's idle cash (gains before 2016 reverse after); fixed-size dip buying (doubles the 2000 drawdown); silver in the metals sleeve (worse than gold in every cell); levered gold via UGL; momentum fallback instead of IEF; sizing on the higher of two vol windows; dropping or halving the rotation sleeve; gold at 20%/40% or a 15% gold vol target; 12% core vol target; 150-day trend. At 2.5x none of the add-ons improves v1 on both metrics.
+
+---
+
+## 7. Behaviour to expect live
+
+- Roughly matches SPY's return at 1.25x with a quarter of SPY's worst drawdown; falls behind buy-and-hold in calm low-vol bull markets (1995-97, 2019, 2021), pulls ahead in bears it can sidestep (2000-02, 2008), and loses in years where equities and bonds fall together with whipsaw trends (v2 at 1.25x: 1994 −2.6%, 2004 −2.0%, 2005 −3.7%, 2015 −5.0%, 2022 −11.8%).
+- Three things most likely to break it: (1) a grinding QQQ bear with bonds falling too, because the core's fallback is IEF; (2) a gold bear while equities chop, because the gold sleeve is 30% of capital and gold's proxy era (pre-2004) is the least tested; (3) data/execution drift on marginal gate days, and TQQQ mechanics for the slice of QQQ exposure above 1x (financing spread has drifted more than 1%/yr between halves of its live history).
+- Settlement: keep cash in a same-day money fund; on the rare next-day cut, sell only settled shares. About 100 trades and 9 next-day round trips a year at 1.25x; no limited margin needed.
 
 ---
 
 ## 8. Daily procedure (live)
 
 1. After the close, refresh adjusted closes for QQQ, SPY, IWM, TLT, IEF, GLD (and the cash fund).
-2. Compute Sleeve A (§2.2) every day; recompute Sleeve B (§2.3) only on the month's last trading day, else carry it.
-3. Blend (§2.4) with the chosen multiplier; map to funds.
+2. Compute Sleeve A (§2.2) and Sleeve C (§2.4) every day; recompute Sleeve B (§2.3) only on the month's last trading day, else carry it.
+3. Blend (§2.5) with multiplier 1.25; map to funds.
 4. Compare with current holdings; place next-close orders only for funds whose |target − current| > 2% of equity.
-In the repo: `python daily_signal.py --lever 1.0 --holdings holdings.json` prints exactly this after `python src/proxies.py` has been rerun on refreshed data.
+In the repo: `python daily_signal.py --holdings holdings.json` prints exactly this (gate state and band levels, dip trigger and boost state, gold sleeve state) after `python src/proxies.py` has been rerun on refreshed data; `--v1` prints TALOS v1.
 
 ---
 
 ## 9. File map in the repository
 
-`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/*.png`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `REPORT.md`, `daily_signal.py`, `src/` (`data.py`, `proxies.py`, `engine.py`, `metrics.py`, `strategies.py`, `system.py`, `system2.py`, `trials.py`, `run_phase3*.py`, `run_holdout.py`, `run_extension.py`, `run_phase6*.py`, `fmp_ingest.py`, `transcript_harvest.py`), `tests/test_engine.py`, `reports/phase3/`, `reports/holdout/`, `reports/extension/`, `reports/phase6/`, `data/proxies/` (frozen 1997 panel, committed), `data/proxies_ext/` (1990 panel, committed), `data/raw/fmp/*.parquet` (not committed; rebuild from FMP as in §3).
+`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/*.png`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md` (v2 with v1 at the end), `REPORT.md` (sections 1-10 = v1 and its holdout; 11a extension; 11b-11c the v2 search), `daily_signal.py`, `src/` (`data.py`, `proxies.py`, `engine.py`, `metrics.py`, `strategies.py`, `system.py` = v1, `system2.py` = v2 with `PARAMS_T7`, `trials.py`, `run_phase3*.py`, `run_holdout.py`, `run_extension.py`, `run_phase6*.py`, `run_phase7*.py`, `fmp_ingest.py`, `transcript_harvest.py`), `tests/test_engine.py`, `reports/{phase3,holdout,extension,phase6,phase7}/`, `data/proxies/` (frozen 1997 panel, committed), `data/proxies_ext/` (1990 panel, committed), `data/raw/fmp/*.parquet` (not committed; rebuild from FMP as in §3).
 
 ---
 
-## Appendix A (v1.2, 2026-09-19): candidate add-on from the phase P6 search, not adopted
+## Appendix A — TALOS v1 (pre-registered rules, the clean out-of-sample record)
 
-After freezing TALOS the client asked for a new angle that raises CAGR by 1-2% and MAR by 0.1-0.25 over 1991-2026. Searched (129 logged cells, design 1991-2015, confirmation 2016-2026, both on the 1990-start proxy panel): trend-gated bond deployment of the core's idle cash (rejected: gains in 1991-2015 reverse after 2016), fixed-size buy-the-dip (rejected: doubles the 2000 drawdown), gold and gold+silver sleeves (silver rejected in every cell), and a vol-scaled buy-the-dip. Best combination found, exact rules:
-
-1. **Dip boost inside Sleeve A.** If QQQ is above its 200d SMA and today's close is the lowest of the last 10 closes, then for the next 5 trading days (inclusive of today's signal) the QQQ exposure of the sleeve is `max(vol-target size, min(1, 2 x vol-target size))`. While QQQ is below its SMA nothing changes.
-2. **Sleeve C, gold, 30% of capital**, funded by scaling Sleeves A and B to 70% x 0.7 and 30% x 0.7 of capital. Each day: if GLD close > its 200d SMA hold GLD at `min(1, 0.10 / vol20_GLD)` of the sleeve, else cash. Never levered above 1x GLD (no UGL).
-3. Everything else as in Sections 2.4-2.7, exposure multiplier 1.25 recommended (1.0 for a no-leverage version).
-
-Results (net, 1991-2026; TALOS 1x for comparison 10.3% / -15.5% / 0.67):
-
-| Multiplier | CAGR | Vol | Sharpe | MaxDD | MAR | Trades/yr |
-|---|---|---|---|---|---|---|
-| 1.0 | 10.0% | 9.1% | 0.80 | -13.2% | 0.76 | 92 |
-| 1.25 | 11.4% | 10.9% | 0.80 | -15.3% | 0.75 | 106 |
-| 1.5 | 12.2% | 12.2% | 0.79 | -16.6% | 0.74 | 126 |
-
-Design window 1991-2015 at 1.25x: 10.6% / -15.3% / 0.70 vs TALOS 9.6% / -15.5% / 0.62. Confirmation 2016-2026 at 1.25x: 13.2% / -14.2% / 0.93 vs TALOS 11.8% / -14.4% / 0.82. So at matched drawdown the add-on gives about +1.1% CAGR and +0.08 MAR (target was +1-2% and +0.1-0.25). Five extra parameters (13 total). The confirmation window is a pseudo-holdout (seen once in phase 4); treat the numbers as in-sample. Files: `src/system2.py`, `src/run_phase6*.py`, `reports/phase6/summary.md`, ledger phase P6.
-
----
-
-## Appendix B (v1.2, 2026-09-19): candidate T7, the best configuration found so far, not adopted
-
-T7 = Appendix A's add-on plus two changes to Sleeve A: (i) the trend length is **250** days for the QQQ gate and the IEF gate; (ii) the QQQ gate has a **1% hysteresis band**: it turns on when the close exceeds 1.01 x SMA250 and off when the close falls below 0.99 x SMA250, otherwise it keeps yesterday's state. The dip trigger, the vol target, the rotation sleeve, the gold sleeve, the band and the fund mapping are unchanged. Recommended multiplier 1.25 (1.0 for a no-leverage version). Fourteen parameters.
-
-| 1991-2026 | CAGR | Vol | Sharpe | MaxDD | MAR | Trades/yr |
-|---|---|---|---|---|---|---|
-| TALOS 1x | 10.3% | 10.2% | 0.75 | -15.5% | 0.67 | 74 |
-| T6 = TALOS + dip + gold, 1x | 10.0% | 9.1% | 0.80 | -13.2% | 0.76 | 92 |
-| T6, 1.25x | 11.4% | 10.9% | 0.80 | -15.3% | 0.74 | 106 |
-| T7 = T6 + gate 1% + SMA 250, 1x | 10.2% | 9.2% | 0.81 | -11.3% | 0.91 | 85 |
-| **T7, 1.25x** | 11.7% | 11.1% | 0.81 | -14.0% | 0.83 | 100 |
-| T7, 1.5x | 12.6% | 12.4% | 0.80 | -16.6% | 0.75 | 118 |
-| TALOS 2.5x | 15.6% | 17.9% | 0.75 | -25.6% | 0.61 | 130 |
-| T7, 2.5x | 15.0% | 15.6% | 0.80 | -23.6% | 0.63 | 160 |
-
-| Window | TALOS 1x | T7 1.25x |
-|---|---|---|
-| design | 9.6% / -15.5% / 0.62 | 11.1% / -13.9% / 0.79 |
-| confirm | 11.8% / -14.4% / 0.82 | 13.1% / -13.2% / 1.00 |
-| full | 10.3% / -15.5% / 0.67 | 11.7% / -14.0% / 0.83 |
-
-Neighbourhood at 1.25x (gate band 0.5-2%, SMA 200-300, 20 cells): full-window MAR 0.68-0.86, CAGR 11.1%-12.0%. Sensitivities at 1.25x, full window: lag 3 MAR 0.80, lag 1 0.68, zero costs 0.87, triple costs 0.76. Tested and rejected in the same phase: momentum fallback instead of IEF, two-window vol sizing, dropping the rotation sleeve, levered gold (UGL), gold 20%/40%, gold vol target 15%, core vol target 12%, SMA 150; and at 2.5x none of the add-ons improves TALOS on both metrics. Same caveats as Appendix A. Files: `src/run_phase7*.py`, `reports/phase7/`, ledger phase P7.
+Two sleeves: 70% core, 30% rotation; no gold sleeve. Core: QQQ at `min(1, 0.10/vol20)` of the sleeve while `close > SMA200` (plain gate, no band, no dip boost); otherwise IEF if `close_IEF > SMA200_IEF`, else cash. Rotation exactly as §2.3 with 30% of capital. Blend, multiplier, mapping, band and costs as in §2.5-2.8. Eight parameters: 200, 10%, 20, 126, top-3, 0.70, 2%, multiplier. Design 1998-2015 at 1x: CAGR 8.5%, Sharpe 0.64, MaxDD −15.5%, MAR 0.55. Locked holdout 2016-2026 at 1x: 11.8%, 0.93, −14.4%, 0.82 (deflated-Sharpe probability vs the best-of-228-trials null: 0.89). Full 1998-2026: 9.7%, 0.75, −15.5%, 0.63. Frontier: 2.5x gives 14.6% at −25.6% (MAR 0.57); 3.0x is the cap (15.6%, −27.9%). Differences v2 − v1: gate band 1%, trend 250 instead of 200, dip boost, 30% gold sleeve, multiplier 1.25.
