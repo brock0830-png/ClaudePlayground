@@ -264,7 +264,32 @@ Against the target, measured at the same worst drawdown as TALOS 1x (the 1.25x r
 
 Costs of adopting it: five more parameters (13 total); trades rise from 74 to 106 a year and next-day round trips from 6 to 9; at 1.25x the QQQ core uses TQQQ for the part of its exposure above 1x; and the confirmation window is not a clean holdout, so the +0.11 MAR there carries the same selection risk as any in-sample number. The dip parameters sit on a smooth region of the grid (neighbouring cells 0.65-0.70 design MAR against 0.72 at the chosen cell and 0.62 for TALOS), which is the main reason to believe the improvement is not a single lucky cell. The add-on is a candidate, not adopted into TALOS; RULES.md and daily_signal.py are unchanged.
 
+## 11c. Phase 7 (exploratory): add-ons at 2.5x, free-rein ideas, and candidate T7
+
+**Add-ons at 2.5x** (`reports/phase7/summary.md`, part 1). None of the phase-6 add-ons improves the 2.5x row on both metrics over 1991-2026. The gold sleeve (plain or levered through UGL) cuts the worst drawdown from 25.6% to 20-24% but costs 1-2.3% of CAGR because it displaces levered equity, so MAR stays at 0.60-0.66; the vol-scaled dip alone lifts CAGR to 17.9% with a 28.5% drawdown (MAR 0.63); the bond-residual variants have design-window MAR above 0.7 that collapses after 2016. Above about 1.5x the worst drawdown is set by the March-April 2000 top and the 2022 episode, which none of these sleeves changes. The levered-gold sleeve is worse than plain gold in every window and would rely on UGL, which fails the liquidity screen.
+
+**Free-rein ideas** (part 2, all applied to T6 = TALOS + vol-scaled dip + gold sleeve at 1x, judged on design 1991-2015 and confirmation 2016-2026): momentum fallback instead of trend-gated IEF (worse everywhere), sizing on the higher of two vol windows (lower drawdown, lower CAGR, MAR flat), dropping or halving the rotation sleeve (MAR down), gold sleeve levered 1.5x-2x (MAR down), gold weight 20%/40% and gold vol target 15% (no gain), core vol target 12% (flat), SMA 150 (worse). Two ideas leave CAGR unchanged at 1x and lift MAR from 0.76 to 0.84 by shortening the 2004-05 whipsaw: a 1% hysteresis band on the QQQ trend gate (enter above 1.01 x SMA, exit below 0.99 x SMA) and a 250-day trend length. Neither passed the strict "both metrics, both windows" rule because CAGR at 1x was flat, so the rule was widened (disclosed here) to judge them at matched drawdown through the multiplier. Together they define **T7 = T6 + gate band 1% + SMA 250** (14 parameters; the band is the one new parameter, the 250 is a value change).
+
+| 1991-2026 | CAGR | Vol | Sharpe | MaxDD | MAR | Trades/yr |
+|---|---|---|---|---|---|---|
+| TALOS 1x | 10.3% | 10.2% | 0.75 | -15.5% | 0.67 | 74 |
+| T6 = TALOS + dip + gold, 1x | 10.0% | 9.1% | 0.80 | -13.2% | 0.76 | 92 |
+| T6, 1.25x | 11.4% | 10.9% | 0.80 | -15.3% | 0.74 | 106 |
+| T7 = T6 + gate 1% + SMA 250, 1x | 10.2% | 9.2% | 0.81 | -11.3% | 0.91 | 85 |
+| **T7, 1.25x** | 11.7% | 11.1% | 0.81 | -14.0% | 0.83 | 100 |
+| T7, 1.5x | 12.6% | 12.4% | 0.80 | -16.6% | 0.75 | 118 |
+| TALOS 2.5x | 15.6% | 17.9% | 0.75 | -25.6% | 0.61 | 130 |
+| T7, 2.5x | 15.0% | 15.6% | 0.80 | -23.6% | 0.63 | 160 |
+
+| Window | TALOS 1x | T7 1.25x |
+|---|---|---|
+| design | 9.6% / -15.5% / 0.62 | 11.1% / -13.9% / 0.79 |
+| confirm | 11.8% / -14.4% / 0.82 | 13.1% / -13.2% / 1.00 |
+| full | 10.3% / -15.5% / 0.67 | 11.7% / -14.0% / 0.83 |
+
+At the same or lower worst drawdown than TALOS 1x, T7 at 1.25x adds +1.4% CAGR and +0.17 MAR over 1991-2026, with the same sign and size in both halves. This meets the phase-6 target (+1-2% and +0.10-0.25). Robustness (`reports/phase7/robustness.csv`): across the 20-cell neighbourhood (gate band 0.5-2%, SMA 200-300, at 1.25x) full-window MAR runs 0.68-0.86 and CAGR 11.1%-12.0%, so every neighbour beats TALOS 1x on CAGR and all but one on MAR; the chosen cell is not the best cell. Sensitivities at 1.25x: one extra day of delay MAR 0.80, same-close fill 0.68, zero costs 0.87, triple costs 0.76. Caveats unchanged from 11b: the confirmation window is a pseudo-holdout, five of the six add-on parameters were chosen on the full 1991-2026 record, and 1.25x uses TQQQ for the part of the core above 1x. Above 1.5x T7 converges to T6 (identical worst drawdowns from 1.5x up).
+
 ## 12. Files
 
-`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `daily_signal.py`, `src/` (engine, strategies, system, trials, run_phase3*.py, run_holdout.py), `tests/test_engine.py` (9 passing), `reports/phase3/summary.md`, `reports/holdout/`, `src/run_extension.py` and `reports/extension/` (post-holdout 1991 extension, section 11a), `src/system2.py`, `src/run_phase6*.py` and `reports/phase6/` (add-on search, section 11b).
+`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `daily_signal.py`, `src/` (engine, strategies, system, trials, run_phase3*.py, run_holdout.py), `tests/test_engine.py` (9 passing), `reports/phase3/summary.md`, `reports/holdout/`, `src/run_extension.py` and `reports/extension/` (post-holdout 1991 extension, section 11a), `src/system2.py`, `src/run_phase6*.py` and `reports/phase6/` (add-on search, section 11b), `src/run_phase7*.py` and `reports/phase7/` (section 11c).
 

@@ -1,8 +1,8 @@
-# TALOS — full specification of the tactical IRA system (v1.1, 2026-09-19)
+# TALOS — full specification of the tactical IRA system (v1.2, 2026-09-19)
 
 **Why the name.** Talos was the bronze automaton of Crete: a machine that patrolled the island's coast on a fixed daily circuit, applying the same rule every day without judgement or fatigue. This system is exactly that: one mechanical patrol of six closing prices after every close, no discretion, no news, no intraday input.
 
-This document is written so that a future thread with no memory of this one can rebuild the system, its data, its backtest and its numbers from scratch. Everything below was computed in the build session; nothing is quoted from outside sources. The code lives in GitHub repository `brock0830-png/ClaudePlayground`, branch `claude/building-session-0uw42p` (commit `8427dde` at the time of writing); this document is self-sufficient without it. v1.1 adds Appendix A (candidate add-on, not adopted); Sections 1-9 are unchanged from v1.
+This document is written so that a future thread with no memory of this one can rebuild the system, its data, its backtest and its numbers from scratch. Everything below was computed in the build session; nothing is quoted from outside sources. The code lives in GitHub repository `brock0830-png/ClaudePlayground`, branch `claude/building-session-0uw42p` (commit `8427dde` at the time of writing); this document is self-sufficient without it. v1.1 added Appendix A (candidate add-on) and v1.2 adds Appendix B (candidate T7); neither is adopted; Sections 1-9 are unchanged from v1.
 
 ---
 
@@ -178,7 +178,7 @@ In the repo: `python daily_signal.py --lever 1.0 --holdings holdings.json` print
 
 ---
 
-## Appendix A (v1.1, 2026-09-19): candidate add-on from the phase P6 search, not adopted
+## Appendix A (v1.2, 2026-09-19): candidate add-on from the phase P6 search, not adopted
 
 After freezing TALOS the client asked for a new angle that raises CAGR by 1-2% and MAR by 0.1-0.25 over 1991-2026. Searched (129 logged cells, design 1991-2015, confirmation 2016-2026, both on the 1990-start proxy panel): trend-gated bond deployment of the core's idle cash (rejected: gains in 1991-2015 reverse after 2016), fixed-size buy-the-dip (rejected: doubles the 2000 drawdown), gold and gold+silver sleeves (silver rejected in every cell), and a vol-scaled buy-the-dip. Best combination found, exact rules:
 
@@ -195,3 +195,28 @@ Results (net, 1991-2026; TALOS 1x for comparison 10.3% / -15.5% / 0.67):
 | 1.5 | 12.2% | 12.2% | 0.79 | -16.6% | 0.74 | 126 |
 
 Design window 1991-2015 at 1.25x: 10.6% / -15.3% / 0.70 vs TALOS 9.6% / -15.5% / 0.62. Confirmation 2016-2026 at 1.25x: 13.2% / -14.2% / 0.93 vs TALOS 11.8% / -14.4% / 0.82. So at matched drawdown the add-on gives about +1.1% CAGR and +0.08 MAR (target was +1-2% and +0.1-0.25). Five extra parameters (13 total). The confirmation window is a pseudo-holdout (seen once in phase 4); treat the numbers as in-sample. Files: `src/system2.py`, `src/run_phase6*.py`, `reports/phase6/summary.md`, ledger phase P6.
+
+---
+
+## Appendix B (v1.2, 2026-09-19): candidate T7, the best configuration found so far, not adopted
+
+T7 = Appendix A's add-on plus two changes to Sleeve A: (i) the trend length is **250** days for the QQQ gate and the IEF gate; (ii) the QQQ gate has a **1% hysteresis band**: it turns on when the close exceeds 1.01 x SMA250 and off when the close falls below 0.99 x SMA250, otherwise it keeps yesterday's state. The dip trigger, the vol target, the rotation sleeve, the gold sleeve, the band and the fund mapping are unchanged. Recommended multiplier 1.25 (1.0 for a no-leverage version). Fourteen parameters.
+
+| 1991-2026 | CAGR | Vol | Sharpe | MaxDD | MAR | Trades/yr |
+|---|---|---|---|---|---|---|
+| TALOS 1x | 10.3% | 10.2% | 0.75 | -15.5% | 0.67 | 74 |
+| T6 = TALOS + dip + gold, 1x | 10.0% | 9.1% | 0.80 | -13.2% | 0.76 | 92 |
+| T6, 1.25x | 11.4% | 10.9% | 0.80 | -15.3% | 0.74 | 106 |
+| T7 = T6 + gate 1% + SMA 250, 1x | 10.2% | 9.2% | 0.81 | -11.3% | 0.91 | 85 |
+| **T7, 1.25x** | 11.7% | 11.1% | 0.81 | -14.0% | 0.83 | 100 |
+| T7, 1.5x | 12.6% | 12.4% | 0.80 | -16.6% | 0.75 | 118 |
+| TALOS 2.5x | 15.6% | 17.9% | 0.75 | -25.6% | 0.61 | 130 |
+| T7, 2.5x | 15.0% | 15.6% | 0.80 | -23.6% | 0.63 | 160 |
+
+| Window | TALOS 1x | T7 1.25x |
+|---|---|---|
+| design | 9.6% / -15.5% / 0.62 | 11.1% / -13.9% / 0.79 |
+| confirm | 11.8% / -14.4% / 0.82 | 13.1% / -13.2% / 1.00 |
+| full | 10.3% / -15.5% / 0.67 | 11.7% / -14.0% / 0.83 |
+
+Neighbourhood at 1.25x (gate band 0.5-2%, SMA 200-300, 20 cells): full-window MAR 0.68-0.86, CAGR 11.1%-12.0%. Sensitivities at 1.25x, full window: lag 3 MAR 0.80, lag 1 0.68, zero costs 0.87, triple costs 0.76. Tested and rejected in the same phase: momentum fallback instead of IEF, two-window vol sizing, dropping the rotation sleeve, levered gold (UGL), gold 20%/40%, gold vol target 15%, core vol target 12%, SMA 150; and at 2.5x none of the add-ons improves TALOS on both metrics. Same caveats as Appendix A. Files: `src/run_phase7*.py`, `reports/phase7/`, ledger phase P7.

@@ -5,6 +5,9 @@ Add-on families (each switched off by default so p == PARAMS2 defaults reproduce
      cash is put into the trend-passing members of `resid_set` (equal split, close > SMA(resid_len)); cash otherwise.
   B. Gold sleeve: a third sleeve of weight w_gold in GLD when GLD > SMA(gold_len), optionally vol-targeted
      (gold_vt = 0 means full sleeve), funded pro rata from the core and rotation sleeves.
+  P7 knobs: gate_band (hysteresis on the QQQ trend gate), vol_win2 (size on the higher of two vol windows),
+     fallback="mom" (best-momentum of IEF/TLT/GLD instead of trend-gated IEF when QQQ is off), gold_lev (the gold
+     sleeve may run up to gold_lev x its capital, expressed through UGL above 1x).
   C. Buy-the-dip: when QQQ is above its SMA and today's close is the lowest of the last dip_n closes, the core holds
      QQQ at dip_boost x sleeve (or, if dip_mult > 0, at min(1, dip_mult x vol-target size)) for dip_hold days. dip_off_frac > 0 additionally
      buys QQQ at that fraction of the sleeve for dip_hold days on an dip_n-day low while QQQ is BELOW its SMA.
@@ -16,7 +19,8 @@ import system as S
 
 PARAMS2 = dict(S.PARAMS, dd_cut=0.0,
                resid_set=(), resid_len=200,
-               w_gold=0.0, gold_len=200, gold_vt=0.0, gold_assets=("GLD",),
+               w_gold=0.0, gold_len=200, gold_vt=0.0, gold_assets=("GLD",), gold_lev=1.0,
+               gate_band=0.0, vol_win2=0, fallback="IEF",
                dip_n=0, dip_hold=5, dip_boost=1.0, dip_off_frac=0.0, dip_mult=0.0)
 
 
@@ -30,9 +34,22 @@ def _hold_flag(trigger: pd.Series, h: int) -> pd.Series:
     return t.rolling(h, min_periods=1).max().astype(bool)
 
 
+def _gate(q, s, band):
+    """Trend gate with hysteresis: on above s*(1+band), off below s*(1-band), else keep the previous state."""
+    if band <= 0:
+        return q > s
+    up = (q > s * (1 + band)).to_numpy(); dn = (q < s * (1 - band)).to_numpy(); out = np.zeros(len(q), dtype=bool); st = False
+    for i in range(len(q)):
+        st = True if up[i] else (False if dn[i] else st); out[i] = st
+    return pd.Series(out, q.index)
+
+
 def core_weights2(R, L, p):
-    q = L["QQQ_X"]; s = sma(q, p["sma_len"]); on = q > s
-    size = (p["vol_target"] / realised_vol(R["QQQ_X"], p["vol_win"])).clip(upper=1.0)
+    q = L["QQQ_X"]; s = sma(q, p["sma_len"]); on = _gate(q, s, p["gate_band"])
+    v = realised_vol(R["QQQ_X"], p["vol_win"])
+    if p["vol_win2"] > 0:
+        v = pd.concat([v, realised_vol(R["QQQ_X"], p["vol_win2"])], axis=1).max(axis=1)   # P7: the higher of two windows
+    size = (p["vol_target"] / v).clip(upper=1.0)
     e_q = pd.Series(np.where(on, size, 0.0), q.index)
     warm = s.isna() | size.isna()
     if p["dip_n"] > 0:
@@ -44,9 +61,18 @@ def core_weights2(R, L, p):
             off_buy = _hold_flag(low & ~on, p["dip_hold"]) & ~on
             e_q = pd.Series(np.where(off_buy, p["dip_off_frac"], e_q), q.index)
     e_q[warm] = 0.0
-    b_on = L["IEF_X"] > sma(L["IEF_X"], p["sma_len"])
-    e_b = pd.Series(np.where(~on & b_on, 1.0, 0.0), q.index); e_b[s.isna()] = 0.0
-    out = pd.DataFrame({"QQQ": e_q, "IEF": e_b})
+    out = pd.DataFrame({"QQQ": e_q})
+    if p["fallback"] == "IEF":
+        b_on = L["IEF_X"] > sma(L["IEF_X"], p["sma_len"])
+        e_b = pd.Series(np.where(~on & b_on, 1.0, 0.0), q.index); e_b[s.isna()] = 0.0
+        out["IEF"] = e_b
+    else:  # "mom": while QQQ is off, the whole sleeve goes to the best 126d-momentum member of IEF/TLT/GLD if it beats cash
+        M = p["mom_len"]; cands = ["IEF", "TLT", "GLD"]
+        mom = pd.DataFrame({u: L[f"{u}_X"] / L[f"{u}_X"].shift(M) - 1 for u in cands}); cm = L["CASH"] / L["CASH"].shift(M) - 1
+        best = mom.fillna(-9).idxmax(axis=1); ok = (mom.max(axis=1) > cm) & ~on & ~s.isna() & mom.notna().all(axis=1)
+        for u in cands:
+            out[u] = np.where(ok & (best == u), 1.0, 0.0)
+    e_b = out.drop(columns=["QQQ"]).sum(axis=1)
     # A. residual deployment
     if p["resid_set"]:
         resid = (1.0 - e_q - e_b).clip(lower=0.0); resid[warm] = 0.0
@@ -67,7 +93,7 @@ def blend_exposures2(R, L, p):
         assets = tuple(p["gold_assets"])   # each metal gets an equal share of the sleeve, gated and sized on its own
         for u in assets:
             g = L[f"{u}_X"]; g_on = g > sma(g, p["gold_len"])
-            size = 1.0 if p["gold_vt"] <= 0 else (p["gold_vt"] / realised_vol(R[f"{u}_X"], p["vol_win"])).clip(upper=1.0)
+            size = p["gold_lev"] if p["gold_vt"] <= 0 else (p["gold_vt"] * p["gold_lev"] / realised_vol(R[f"{u}_X"], p["vol_win"])).clip(upper=p["gold_lev"])
             e_g = pd.Series(np.where(g_on, size, 0.0), g.index).fillna(0.0)
             e[u] = e.get(u, 0.0) + wg * e_g / len(assets)
     return e.fillna(0.0)
