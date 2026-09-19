@@ -32,6 +32,8 @@ ER = {
     "GLD": 0.0040, "SLV": 0.0050, "DBC": 0.0085, "USO": 0.0060, "EDV": 0.0005,
     "SSO": 0.0089, "UPRO": 0.0091, "SPXL": 0.0091, "QLD": 0.0095, "TQQQ": 0.0084,
     "UBT": 0.0095, "TMF": 0.0106, "UST": 0.0095, "UGL": 0.0095,
+    "SH": 0.0088, "SDS": 0.0090, "SPXU": 0.0090, "PSQ": 0.0095, "QID": 0.0095, "SQQQ": 0.0095,
+    "TBT": 0.0090, "TMV": 0.0101,
 }
 
 # Leveraged fund -> (base series, leverage)
@@ -39,6 +41,10 @@ LEVERED = {
     "SSO": ("SPY", 2), "UPRO": ("SPY", 3), "SPXL": ("SPY", 3),
     "QLD": ("QQQ", 2), "TQQQ": ("QQQ", 3),
     "UBT": ("TLT", 2), "TMF": ("TLT", 3), "UST": ("IEF", 2), "UGL": ("GLD", 2),
+    # inverse funds: held long in the account; simulated with negative L (collateral earns cash)
+    "SH": ("SPY", -1), "SDS": ("SPY", -2), "SPXU": ("SPY", -3),
+    "PSQ": ("QQQ", -1), "QID": ("QQQ", -2), "SQQQ": ("QQQ", -3),
+    "TBT": ("TLT", -2), "TMV": ("TLT", -3),
 }
 
 

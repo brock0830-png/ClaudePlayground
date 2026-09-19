@@ -15,8 +15,8 @@ All series are daily total-return on the SPY trading calendar from 1997-01-02. L
 |---|---|---|---|---|---|
 | SPY | GSPC + carry | 1997-01-03 | 3.26% | -0.02% | yes |
 | QQQ | NDX + carry | 1999-03-11 | 5.16% | +1.33% | yes |
-| IWM | RUT + carry | 2000-05-30 | 3.55% | +0.05% | yes |
-| GLD | GCUSD + carry | 2004-11-19 | 8.88% | -0.24% | yes |
+| IWM | RUT + carry | 2000-05-30 | 3.55% | +0.03% | yes |
+| GLD | GCUSD + carry | 2004-11-19 | 8.88% | -0.14% | yes |
 
 Carry values (annual): SPY +1.46% (full-overlap +1.72%), QQQ -0.37% (full-overlap +0.55%), IWM +1.19% (full-overlap +1.21%), GLD -0.28% (full-overlap -0.50%).
 
@@ -48,17 +48,25 @@ The 30-year CMT is missing from 2002-02 to 2006-02 (the Treasury stopped issuing
 
 | Fund | Base | L | ER | Spread (full) | Spread 1st half | Spread 2nd half | TE (ann.) | Geometric drift after calibration | Split-half drift | Corr | Live from | Passes 1% rule | Split-half > 1% |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| SSO | SPY | 2 | 0.89% | -0.17% | -0.74% | +0.40% | 4.7% | +0.23% | -1.14% | 0.993 | 2006-06-22 | yes | yes |
-| UPRO | SPY | 3 | 0.91% | +0.66% | +0.49% | +0.83% | 3.7% | +0.05% | -0.69% | 0.997 | 2009-06-26 | yes | no |
+| SSO | SPY | 2 | 0.89% | -0.17% | -0.73% | +0.38% | 4.7% | +0.23% | -1.11% | 0.993 | 2006-06-22 | yes | yes |
+| UPRO | SPY | 3 | 0.91% | +0.66% | +0.48% | +0.84% | 3.7% | +0.04% | -0.72% | 0.997 | 2009-06-26 | yes | no |
 | SPXL | SPY | 3 | 0.91% | +0.78% | +0.72% | +0.84% | 4.6% | +0.39% | -0.24% | 0.997 | 2008-11-06 | yes | no |
-| QLD | QQQ | 2 | 0.95% | +0.49% | +0.32% | +0.66% | 5.1% | -0.01% | -0.34% | 0.993 | 2006-11-02 | yes | no |
-| TQQQ | QQQ | 3 | 0.84% | +0.74% | +0.41% | +1.06% | 4.1% | +0.47% | -1.30% | 0.998 | 2010-02-12 | yes | yes |
-| UBT | TLT | 2 | 0.95% | -0.28% | -0.41% | -0.15% | 5.2% | +0.13% | -0.26% | 0.985 | 2010-01-22 | yes | no |
-| TMF | TLT | 3 | 1.06% | +0.55% | +0.65% | +0.46% | 3.7% | +0.10% | +0.37% | 0.997 | 2009-04-17 | yes | no |
-| UST | IEF | 2 | 0.95% | -0.33% | -0.35% | -0.32% | 3.1% | +0.02% | -0.02% | 0.972 | 2010-01-25 | yes | no |
-| UGL | GLD | 2 | 0.95% | +1.52% | +1.23% | +1.82% | 2.8% | -0.06% | -0.59% | 0.997 | 2008-12-04 | yes | no |
+| QLD | QQQ | 2 | 0.95% | +0.48% | +0.30% | +0.67% | 5.1% | -0.01% | -0.37% | 0.993 | 2006-11-02 | yes | no |
+| TQQQ | QQQ | 3 | 0.84% | +0.73% | +0.40% | +1.06% | 4.1% | +0.47% | -1.31% | 0.998 | 2010-02-12 | yes | yes |
+| UBT | TLT | 2 | 0.95% | -0.28% | -0.44% | -0.11% | 5.2% | +0.13% | -0.33% | 0.985 | 2010-01-22 | yes | no |
+| TMF | TLT | 3 | 1.06% | +0.55% | +0.64% | +0.47% | 3.7% | +0.10% | +0.36% | 0.997 | 2009-04-17 | yes | no |
+| UST | IEF | 2 | 0.95% | -0.33% | -0.36% | -0.31% | 3.1% | +0.02% | -0.06% | 0.972 | 2010-01-25 | yes | no |
+| UGL | GLD | 2 | 0.95% | +1.52% | +1.23% | +1.80% | 2.8% | -0.06% | -0.57% | 0.997 | 2008-12-04 | yes | no |
+| SH | SPY | -1 | 0.88% | +0.04% | +0.04% | +0.03% | 2.4% | +0.04% | -0.02% | 0.993 | 2006-06-22 | yes | no |
+| SDS | SPY | -2 | 0.90% | -0.04% | -0.09% | +0.01% | 3.8% | +0.32% | +0.29% | 0.995 | 2006-07-14 | yes | no |
+| SPXU | SPY | -3 | 0.90% | -0.20% | -0.05% | -0.36% | 3.4% | +0.20% | -1.26% | 0.998 | 2009-06-26 | yes | yes |
+| PSQ | QQQ | -1 | 0.95% | -0.14% | -0.21% | -0.08% | 2.7% | +0.03% | +0.26% | 0.992 | 2006-06-22 | yes | no |
+| QID | QQQ | -2 | 0.95% | -0.34% | -0.51% | -0.18% | 4.3% | +0.17% | +0.99% | 0.995 | 2006-07-14 | yes | no |
+| SQQQ | QQQ | -3 | 0.95% | -0.31% | -0.21% | -0.41% | 3.3% | +0.42% | -0.79% | 0.999 | 2010-02-12 | yes | no |
+| TBT | TLT | -2 | 0.90% | -0.56% | -0.76% | -0.35% | 4.7% | +0.21% | +1.22% | 0.988 | 2008-05-02 | yes | yes |
+| TMV | TLT | -3 | 1.01% | -0.33% | -0.50% | -0.17% | 3.2% | +0.00% | +1.29% | 0.997 | 2009-04-17 | yes | yes |
 
-All nine simulated funds pass the brief's criterion (geometric drift within 1%/yr after calibrating the financing spread on the live history). Two of them, SSO and TQQQ, have an implied spread that shifted by more than 1%/yr between the halves of their live history (SSO -0.74% to +0.40%, TQQQ +0.41% to +1.06%), so a spread calibrated on one half would have drifted by about 1.1 to 1.3%/yr on the other. This is the honest uncertainty on the pre-inception simulated segments (1997 to 2006 for 2x, 1997 to 2009/2010 for 3x). Phase 3 therefore reports every leveraged result with a sensitivity of plus and minus 1%/yr of extra drag on the simulated segments. Correlations of 0.97 to 0.998 and tracking errors of 3 to 5%/yr are consistent with daily-rebalanced funds whose intraday and financing details are not modelled.
+Simulated funds that pass the brief's criterion (geometric drift within 1%/yr after calibrating the financing spread on the live history). Two of them, SSO and TQQQ, have an implied spread that shifted by more than 1%/yr between the halves of their live history (SSO -0.74% to +0.40%, TQQQ +0.41% to +1.06%), so a spread calibrated on one half would have drifted by about 1.1 to 1.3%/yr on the other. This is the honest uncertainty on the pre-inception simulated segments (1997 to 2006 for 2x, 1997 to 2009/2010 for 3x). Phase 3 therefore reports every leveraged result with a sensitivity of plus and minus 1%/yr of extra drag on the simulated segments. Correlations of 0.97 to 0.998 and tracking errors of 3 to 5%/yr are consistent with daily-rebalanced funds whose intraday and financing details are not modelled.
 
 ## Series availability
 
@@ -95,6 +103,14 @@ All nine simulated funds pass the brief's criterion (geometric drift within 1%/y
 | TMF_X | 1997-01-03 | simulated before live start |
 | UST_X | 1997-01-03 | simulated before live start |
 | UGL_X | 1997-01-03 | simulated before live start |
+| SH_X | 1997-01-03 | simulated before live start |
+| SDS_X | 1997-01-03 | simulated before live start |
+| SPXU_X | 1997-01-03 | simulated before live start |
+| PSQ_X | 1997-01-03 | simulated before live start |
+| QID_X | 1997-01-03 | simulated before live start |
+| SQQQ_X | 1997-01-03 | simulated before live start |
+| TBT_X | 1997-01-03 | simulated before live start |
+| TMV_X | 1997-01-03 | simulated before live start |
 
 ## Charts
 
@@ -114,3 +130,11 @@ All nine simulated funds pass the brief's criterion (geometric drift within 1%/y
 ![TMF](reports/proxies/TMF.png)
 ![UST](reports/proxies/UST.png)
 ![UGL](reports/proxies/UGL.png)
+![SH](reports/proxies/SH.png)
+![SDS](reports/proxies/SDS.png)
+![SPXU](reports/proxies/SPXU.png)
+![PSQ](reports/proxies/PSQ.png)
+![QID](reports/proxies/QID.png)
+![SQQQ](reports/proxies/SQQQ.png)
+![TBT](reports/proxies/TBT.png)
+![TMV](reports/proxies/TMV.png)

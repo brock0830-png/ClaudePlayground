@@ -2,6 +2,8 @@
 
 Written 2026-09-19 before any strategy backtest was run. Committed before the first entry in `TRIAL_LEDGER.csv`. Anything not written here that later influences the design is a deviation and will be logged as such in REPORT.md.
 
+**Amendment v2 (2026-09-19, still before any trial):** the client clarified that long positions in inverse and leveraged-inverse ETFs are permitted, and restated the objective as CAGR at least 15% with MAR at least 1.0 (stretch 1.25). Inverse funds were added to the instrument set and simulated exactly like the leveraged funds (negative L, collateral earns the cash rate); their validation is in PROXY_VALIDATION.md. Hypotheses H1, H3 and H6 gained one grid dimension, the "bear side": what is held when the trend gate is off. The ledger was empty when this amendment was committed.
+
 ## 0. Fixed protocol
 
 | Item | Setting |
@@ -12,11 +14,11 @@ Written 2026-09-19 before any strategy backtest was run. Committed before the fi
 | Execution | Signal from data through close of day t, fill at close of day t+1 (engine lag 2). Same-close (lag 1) is a sensitivity only. One-extra-day delay (lag 3) is a required robustness check |
 | Costs (1x) | 2 bp commission plus half spread per trade: SPY 0.5 bp, QQQ 0.5, IWM 1, TLT 1, IEF 1, SHY 0.5, GLD 1, BIL 0.5. Leveraged ETFs: (2 bp + 1 bp) doubled = 6 bp. Reported at 0x, 1x, 3x |
 | Account | $1M cash IRA, long-only, no borrowing, weights sum to at most 1, cash sleeve earns the CASH series |
-| Instruments allowed | SPY_X, QQQ_X, IWM_X, TLT_X, IEF_X, SHY_X, GLD_X, CASH; leveraged SSO_X, UPRO_X, QLD_X, TQQQ_X, UBT_X, TMF_X, UST_X, UGL_X. Signals may also use VIX level and the Treasury curve. Excluded: DBC, USO, SLV, DIA, EDV, SPXL (no pre-2006 history or redundant), all VIX ETPs |
-| Leveraged-ETF caveat | Pre-inception segments are simulated. Every leveraged result is reported with +/-1%/yr extra drag on simulated segments |
+| Instruments allowed | SPY_X, QQQ_X, IWM_X, TLT_X, IEF_X, SHY_X, GLD_X, CASH; leveraged SSO_X, UPRO_X, QLD_X, TQQQ_X, UBT_X, TMF_X, UST_X, UGL_X; inverse SH_X (-1x SPY), SDS_X (-2x), SPXU_X (-3x), PSQ_X (-1x QQQ), QID_X (-2x), SQQQ_X (-3x), TBT_X (-2x TLT), TMV_X (-3x TLT). Signals may also use VIX level and the Treasury curve. Excluded: DBC, USO, SLV, DIA, EDV, SPXL (no pre-2006 history or redundant), all VIX ETPs |
+| Leveraged-ETF caveat | Pre-inception segments are simulated. Every leveraged or inverse result is reported with +/-1%/yr extra drag on simulated segments. Inverse funds held during rising markets lose money by construction; no hypothesis holds them unconditionally |
 | Complexity budget | At most 8 free parameters in the final system. A "free parameter" is any number a reader could change; fixed conventions like 252 trading days do not count |
 | Trial ledger | Every backtest run, including baselines, failures and robustness cells, appends one row to `TRIAL_LEDGER.csv`. The final count feeds the deflated Sharpe ratio |
-| Objective stated by the client | CAGR above 15% and MAR (CAGR / max drawdown) above 1.5. Together these imply a max drawdown under 10% at 15% CAGR. I record here, before testing, that I do not expect any long-only daily-rebalanced ETF system to meet both over 1998-2015 including 2000-02 and 2008, and that reporting a shortfall is an acceptable outcome |
+| Objective stated by the client | CAGR at least 15% and MAR (CAGR / max drawdown) at least 1.0, stretch 1.25. At 15% CAGR that means a max drawdown of 15% (stretch 12%). I record here, before testing, that this is a demanding target across 1998-2015 including 2000-02 and 2008, and that reporting a shortfall is an acceptable outcome. The frontier at 15%, 25% and 35% drawdown is reported regardless |
 
 ## 1. Baselines (every candidate is compared against all four)
 
@@ -45,17 +47,17 @@ Metrics for P1 to P5 are always the neighbourhood-median cell unless a single ce
 
 Each lists economic rationale, exact rule family, grid, and how it is judged. Grids are deliberately small; total planned cells are counted at the end.
 
-**H1 Equity trend filter.** Rationale: time-series momentum and the tendency of large drawdowns to occur below long-term averages. Rule: hold 100% of E when close(E) > SMA(N) of close(E), else CASH. E in {SPY_X, QQQ_X}. Grid: N in {100, 150, 200, 250}. 8 cells. This is B3 generalised; it passes only if the QQQ version or a shorter N beats B3 by the P1 margin.
+**H1 Equity trend filter.** Rationale: time-series momentum and the tendency of large drawdowns to occur below long-term averages. Rule: hold 100% of E when close(E) > SMA(N) of close(E), else the bear side. E in {SPY_X, QQQ_X}. Grid: N in {100, 150, 200, 250}, bear side in {CASH, -1x fund of E, -2x fund of E}. 24 cells. This is B3 generalised; it passes only if some version beats B3 by the P1 margin at the neighbourhood median.
 
 **H2 Equity volatility targeting.** Rationale: volatility clusters and realised vol forecasts next-day vol far better than returns; scaling exposure inversely to vol raises Sharpe and cuts left tail. Rule: w = min(cap, target / vol_N) where vol_N is the annualised standard deviation of the last N daily returns of E; exposure above 1 is obtained with the 2x fund of E (SSO_X or QLD_X) so that w in (1, 2] means (2 - w) in E and (w - 1) in the 2x fund. E in {SPY_X, QQQ_X}. Grid: target in {10%, 15%}, N in {20, 60}, cap in {1, 2}. 16 cells.
 
-**H3 Trend gate times vol target (core "Tiger-like" candidate).** Rationale: H1 removes bear-market exposure, H2 sizes the remainder; the two signals are weakly correlated. Rule: w = H2 weight if H1 condition true, else 0 (CASH). Grid: E in {SPY_X, QQQ_X}, N_trend in {150, 200}, target in {10%, 15%}, N_vol = 20 fixed, cap in {1.5, 2}. 16 cells.
+**H3 Trend gate times vol target (core "Tiger-like" candidate).** Rationale: H1 removes bear-market exposure, H2 sizes the remainder; the two signals are weakly correlated. Rule: w = H2 weight if H1 condition true, else the bear side sized by the same vol target (bear exposure = min(1, target / vol_N) in the -1x fund, or 0 for CASH). Grid: E in {SPY_X, QQQ_X}, N_trend in {150, 200}, target in {10%, 15%}, N_vol = 20 fixed, cap in {1.5, 2}, bear side in {CASH, -1x}. 32 cells.
 
 **H4 Buy-the-dip with leverage ("Whale-like" candidate).** Rationale: short-horizon reversal in index returns after sharp pullbacks inside an uptrend; leverage applied only at the dip. Rule: base exposure 1.0 in E while close > SMA(200); when close is at least D% below its 20-day high and above SMA(200), add the 3x fund so that total exposure is L; remove the add-on when close makes a new 20-day high or falls below SMA(200). Below SMA(200): CASH. E in {SPY_X, QQQ_X}. Grid: D in {3, 5, 8}, L in {2, 3}. 12 cells.
 
 **H5 Cross-asset momentum rotation.** Rationale: 6-12 month cross-sectional momentum across asset classes with an absolute-momentum gate. Rule: universe {SPY_X, QQQ_X, IWM_X, TLT_X, GLD_X}; each month end rank by total return over the last M days; hold the top k equally weighted, but any asset whose M-day return is below CASH's M-day return is replaced by CASH. Grid: M in {126, 252}, k in {1, 2, 3}. 6 cells.
 
-**H6 Trend-gated inverse-vol multi-asset with vol target.** Rationale: risk parity across stocks, long bonds and gold gives diversification; a per-asset trend gate removes the 2022-style failure when all three fall; a portfolio vol target stabilises risk. Rule: assets {SPY_X, TLT_X, GLD_X}; asset i gets raw weight 1/vol_i(N) if close_i > SMA(N_trend) else 0; weights normalised to sum 1 then scaled by min(cap, target / portfolio_vol) where portfolio vol is from the last N days of the weighted return; exposure above 1 uses the 2x funds (SSO_X, UBT_X, UGL_X). Grid: N_trend in {150, 200}, target in {9%, 12%}, cap in {1.5, 2}. 8 cells. N = 60 fixed.
+**H6 Trend-gated inverse-vol multi-asset with vol target.** Rationale: risk parity across stocks, long bonds and gold gives diversification; a per-asset trend gate removes the 2022-style failure when all three fall; a portfolio vol target stabilises risk. Rule: assets {SPY_X, TLT_X, GLD_X}; asset i gets raw weight 1/vol_i(N) if close_i > SMA(N_trend) else 0; weights normalised to sum 1 then scaled by min(cap, target / portfolio_vol) where portfolio vol is from the last N days of the weighted return; exposure above 1 uses the 2x funds (SSO_X, UBT_X, UGL_X). Bear side: when an equity or bond asset is below its trend, its raw weight is either 0 (CASH) or the same 1/vol weight in the -1x fund (SH_X for SPY; for TLT the -2x fund TBT_X at half weight, since no -1x Treasury fund has history; gold has no inverse and stays 0). Grid: N_trend in {150, 200}, target in {9%, 12%}, cap in {1.5, 2}, bear side in {CASH, inverse}. 16 cells. N = 60 fixed.
 
 **H7 Drawdown control overlay.** Rationale: the client's archetype includes a drawdown control; cutting exposure after losses caps the tail at the cost of slower recovery. Rule: overlay on the median cell of H3 and H6: multiply exposure by 0.5 when the strategy's own equity is more than D below its running peak, restore when within D/2 of the peak. Grid: D in {5%, 10%}. 4 cells. Judged by MAR change and by whether CAGR falls by less than the drawdown falls.
 
@@ -69,7 +71,7 @@ Each lists economic rationale, exact rule family, grid, and how it is judged. Gr
 
 **H12 Blend.** Rationale: the client's Tiger archetype is a multi-strategy blend. Rule: fixed-weight blend of the median H3 cell and the median H5 cell, plus H7 overlay at its better D. Grid: weight on H3 in {50%, 70%}. 2 cells. Passes only if MAR beats every component.
 
-Planned cells: 8 + 16 + 16 + 12 + 6 + 8 + 4 + 2 + 2 + 8 + 2 + 2 = 86, plus 5 baselines, plus robustness runs (lag 3, sub-period removal, 3x costs, 0x costs) on passing hypotheses. Expected ledger size: about 150 to 250 rows.
+Planned cells: 24 + 16 + 32 + 12 + 6 + 16 + 4 + 2 + 2 + 8 + 2 + 2 = 126, plus 5 baselines, plus robustness runs (lag 3, sub-period removal, 3x costs, 0x costs) on passing hypotheses. Expected ledger size: about 200 to 350 rows.
 
 ## 4. Selection and frontier
 
