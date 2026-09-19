@@ -49,11 +49,12 @@ def ingest(tool_dir: str | Path, out_dir: str | Path) -> dict[str, int]:
     for key, parts in frames.items():
         df = pd.concat(parts, ignore_index=True)
         df["date"] = pd.to_datetime(df["date"])
-        df = df.drop_duplicates("date", keep="last").sort_values("date").reset_index(drop=True)
         target = out_dir / f"{key}.parquet"
         if target.exists():
-            old = pd.read_parquet(target)
-            df = pd.concat([old, df]).drop_duplicates("date", keep="last").sort_values("date").reset_index(drop=True)
+            old = pd.read_parquet(target); old["date"] = pd.to_datetime(old["date"])
+            df = pd.concat([old, df], ignore_index=True)
+        # field-wise merge per date: last non-null wins, so an unadjusted-endpoint row never blanks adjClose
+        df = df.groupby("date", sort=True).last().reset_index()
         df.to_parquet(target, index=False)
         counts[key] = len(df)
     return counts

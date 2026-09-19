@@ -53,10 +53,12 @@ if __name__ == "__main__":
     out = Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
     for key, rows in harvest(sys.argv[1]).items():
         df = pd.DataFrame(rows); df["date"] = pd.to_datetime(df["date"])
-        df = df.drop_duplicates("date", keep="last").sort_values("date")
         target = out / f"{key}.parquet"
         if target.exists():
-            old = pd.read_parquet(target)
-            df = pd.concat([old, df]).drop_duplicates("date", keep="last").sort_values("date")
+            old = pd.read_parquet(target); old["date"] = pd.to_datetime(old["date"])
+            df = pd.concat([old, df])
+        # merge rows for the same date field-by-field: the last non-null value wins, so a row from an unadjusted
+        # endpoint never blanks out adjClose captured from the adjusted endpoint
+        df = df.groupby("date", sort=True).last().reset_index()
         df.to_parquet(target, index=False)
         print(key, len(df), df.date.min().date(), df.date.max().date())

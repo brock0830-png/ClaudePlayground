@@ -219,7 +219,27 @@ UGL, UST and UBT are flagged. They are used only above 1x exposure (UST for the 
 
 Primary daily source is FMP dividend-adjusted closes, not the Norgate export (which could not be loaded through this environment's 6 MB connector limit; see DATA_AUDIT.md). FMP agrees with Norgate total-return closes to within 2 to 6 bp/yr on the two ETFs that could be cross-checked. Pre-inception segments are proxies (PROXY_VALIDATION.md): the 1x system's exposure to those is QQQ before 1999-03 (14 months of NDX plus carry), IWM before 2000-05, TLT/IEF before 2002-07 (par-bond proxies; IEF's carries +0.9%/yr drift), GLD before 2004-11. The 2000-02 episode is therefore the least reliable of the four.
 
+## 11a. Post-holdout history extension to 1991 (exploratory, not pre-registered)
+
+After the holdout run the client asked whether index data (NDX, GSPC, RUT, GCUSD) could push the test further back. A second proxy panel starting 1990-01-02 was built with the same code and the same calibrations (`python3 src/proxies.py --ext`, output `data/proxies_ext/`, frozen panel untouched and reproduced bit-for-bit). Additional proxy assumptions in the extension only: the trading calendar before SPY's first print (1993-01-29) is the S&P 500 index calendar; the 20-year CMT yield is not published before 1993-10 and is filled with the 30-year yield plus the mean 30y minus 20y spread of 1993-10 to 1996-10 (-11 bp, 950 days filled); everything before 1993-01 is entirely proxy (no live ETF anywhere in the book), and before 1999-03/2002-07/2004-11 the QQQ/bond/gold legs are proxies as in the main panel. Frozen rules, band 0.02, lag 2, costs x1. Rows are logged as phase P5 and are excluded from the deflated-Sharpe trial count. Script: `src/run_extension.py`; outputs in `reports/extension/` (`summary.md`, `extension_metrics.csv`, `annual_returns.csv`, `equity_extension.png`).
+
+| 1991-01-04 to 2026-09-18 | CAGR | Vol | Sharpe | MaxDD | MAR | Avg lev |
+|---|---|---|---|---|---|---|
+| FINAL 1x | 10.3% | 10.2% | 0.75 | -15.5% | 0.66 | 0.71 |
+| FINAL 2.5x | 15.6% | 17.9% | 0.75 | -25.6% | 0.61 | 1.22 |
+| SPY buy-and-hold | 11.3% | 18.2% | 0.53 | -55.2% | 0.21 | 1.00 |
+
+| New segment 1991-01-04 to 1997-12-31 | CAGR | Vol | Sharpe | MaxDD | MAR |
+|---|---|---|---|---|---|
+| FINAL 1x | 12.3% | 10.3% | 0.73 | -10.4% | 1.18 |
+| FINAL 2.5x | 19.4% | 17.8% | 0.82 | -16.9% | 1.15 |
+| SPY buy-and-hold | 20.0% | 12.7% | 1.13 | -11.2% | 1.79 |
+
+What the new seven years say. The system behaves in 1991-1997 the way it behaves later: roughly SPY's return at half to two thirds of SPY's drawdown at 1x, and the 2.5x version adds return one-for-one with drawdown. It does not beat buy-and-hold in a low-volatility bull market (1995-1997 SPY compounded at 31% with an 11% drawdown; the 1x system did 19% with a 10% drawdown). 1994, the bond bear, is a loss year for the system (-1.5% at 1x, -6.6% at 2.5x, SPY +0.4%): the rotation sleeve was long TLT/IEF into the rate shock and the core sat in cash for much of the year. The 1991-1993 all-proxy segment shows MAR above 1.5 at both leverage levels, but that is three years of proxy data in a bull market and should carry no weight. Adding seven years lifts the full-window MAR from 0.63 to 0.66 (1x) and 0.57 to 0.61 (2.5x); the objective of CAGR 15% with MAR 1.0 is still not met on any window longer than a decade. The 1998+ slice of the extension reproduces the holdout run (identical MaxDD; CAGR within 0.07% because positions are already held on 1998-01-02 instead of starting from cash).
+
+Data note found during this step: re-harvesting FMP tool results had overwritten eight SPY rows (2024-03-11 to 2024-03-20) with unadjusted-endpoint rows lacking `adjClose`. The merge in `src/fmp_ingest.py` and `src/transcript_harvest.py` now merges field-by-field per date (last non-null wins) and the rows were restored from the saved tool results before any panel was rebuilt; the frozen panel was verified to be reproduced exactly afterwards, so no reported figure changed.
+
 ## 12. Files
 
-`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `daily_signal.py`, `src/` (engine, strategies, system, trials, run_phase3*.py, run_holdout.py), `tests/test_engine.py` (9 passing), `reports/phase3/summary.md`, `reports/holdout/`.
+`DATA_AUDIT.md`, `PROXY_VALIDATION.md` (+ `reports/proxies/`), `PREREG.md`, `TRIAL_LEDGER.csv`, `RULES.md`, `daily_signal.py`, `src/` (engine, strategies, system, trials, run_phase3*.py, run_holdout.py), `tests/test_engine.py` (9 passing), `reports/phase3/summary.md`, `reports/holdout/`, `src/run_extension.py` and `reports/extension/` (post-holdout 1991 extension, section 11a).
 

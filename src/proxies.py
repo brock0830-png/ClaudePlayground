@@ -75,13 +75,26 @@ def splice(early_ret: pd.Series, live_ret: pd.Series) -> pd.Series:
     return out[~out.index.duplicated(keep="last")].sort_index()
 
 
-def build(verbose=True) -> tuple[pd.DataFrame, dict]:
-    cal = trading_calendar(START)
-    meta = {}
+def build(verbose=True, start=START, out=OUT) -> tuple[pd.DataFrame, dict]:
+    """Build the proxy panel from `start` into directory `out`. The frozen panel is start=1997-01-02, out=data/proxies.
+    Any other start writes elsewhere and never touches the frozen panel (a guard below enforces this)."""
+    if start != START and Path(out) == OUT:
+        raise ValueError("a non-default start must be written to a different directory")
+    out = Path(out)
+    cal = trading_calendar(start)
+    meta = {"panel_start": start}
     R = {}  # daily simple returns
 
     # ---- risk free ----------------------------------------------------
     tsy = load_treasury().reindex(cal).ffill(limit=5)
+    # 20y CMT is not published before 1993-10; for an early start fill it with 30y minus the mean 30y-20y spread
+    # measured over the first 3 years both exist (only used by the TLT proxy in the extension panel).
+    if tsy["y20"].isna().any() and tsy["y30"].notna().any():
+        both = tsy[["y20", "y30"]].dropna(); both = both[both.index <= both.index[0] + pd.Timedelta(days=3 * 365)]
+        sp = float((both.y30 - both.y20).mean())
+        n_fill = int(tsy["y20"].isna().sum() - tsy[["y20", "y30"]].isna().all(axis=1).sum())
+        tsy["y20"] = tsy["y20"].fillna(tsy["y30"] - sp)
+        meta["y20_fill"] = {"from": "y30", "spread_ann": sp, "days_filled": n_fill, "calib_window": [str(both.index[0].date()), str(both.index[-1].date())]}
     bil = load_close("BIL").reindex(cal).pct_change()
     rf_cmt = (tsy["m3"] / 252)
     rf = rf_cmt.copy()
@@ -185,17 +198,17 @@ def build(verbose=True) -> tuple[pd.DataFrame, dict]:
 
     # ---- assemble ----------------------------------------------------------
     panel_r = pd.DataFrame(R).reindex(cal)
-    panel_r = panel_r[panel_r.index >= START]
+    panel_r = panel_r[panel_r.index >= start]
     # levels
     levels = (1 + panel_r.fillna(0)).cumprod()
     levels[panel_r.isna() & (panel_r.ffill().isna())] = np.nan  # before first data
-    OUT.mkdir(parents=True, exist_ok=True)
-    panel_r.to_parquet(OUT / "returns.parquet")
-    levels.to_parquet(OUT / "levels.parquet")
+    out.mkdir(parents=True, exist_ok=True)
+    panel_r.to_parquet(out / "returns.parquet")
+    levels.to_parquet(out / "levels.parquet")
     vix = load_close("VIX").reindex(cal).ffill(limit=3)
-    vix[vix.index >= START].to_frame("VIX").to_parquet(OUT / "vix.parquet")
-    tsy[tsy.index >= START].to_parquet(OUT / "treasury.parquet")
-    (OUT / "meta.json").write_text(json.dumps(meta, indent=2, default=float))
+    vix[vix.index >= start].to_frame("VIX").to_parquet(out / "vix.parquet")
+    tsy[tsy.index >= start].to_parquet(out / "treasury.parquet")
+    (out / "meta.json").write_text(json.dumps(meta, indent=2, default=float))
     if verbose:
         for k, v in meta.items():
             if isinstance(v, dict):
@@ -204,4 +217,8 @@ def build(verbose=True) -> tuple[pd.DataFrame, dict]:
 
 
 if __name__ == "__main__":
-    build()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "--ext":
+        build(start="1990-01-02", out=OUT.parent / "proxies_ext")
+    else:
+        build()

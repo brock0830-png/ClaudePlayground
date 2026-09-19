@@ -44,8 +44,13 @@ def load_treasury() -> pd.DataFrame:
 
 
 def trading_calendar(start="1993-01-29", end=None) -> pd.DatetimeIndex:
+    """SPY trading dates. For starts before SPY's first print (1993-01-29) the S&P 500 index (GSPC)
+    dates are used for the pre-SPY segment so the post-1993 calendar is unchanged."""
     spy = load_close("SPY")
     idx = spy.index[spy.index >= pd.Timestamp(start)]
+    if pd.Timestamp(start) < spy.index[0]:
+        g = load_close("GSPC").index
+        idx = g[(g >= pd.Timestamp(start)) & (g < spy.index[0])].append(idx)
     if end is not None:
         idx = idx[idx <= pd.Timestamp(end)]
     return idx
