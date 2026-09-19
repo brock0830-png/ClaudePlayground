@@ -1,0 +1,62 @@
+{
+  "FINAL lever=1.0 [design]": {
+    "sharpe": 0.6441383189098503,
+    "T": 4529,
+    "n_trials": 228,
+    "sr_var_trials": 0.037383995773898365,
+    "skew": -0.34319792759677326,
+    "kurt": 5.258358933748081,
+    "PSR_vs_max_of_trials": 0.6648157399962493,
+    "expected_max_null_sharpe_ann": 0.5429407655630568
+  },
+  "FINAL lever=1.0 [holdout]": {
+    "sharpe": 0.9269928605498959,
+    "T": 2693,
+    "n_trials": 228,
+    "sr_var_trials": 0.037383995773898365,
+    "skew": -0.7258049007861561,
+    "kurt": 6.1389202888458225,
+    "PSR_vs_max_of_trials": 0.8900666038455312,
+    "expected_max_null_sharpe_ann": 0.5429407655630568
+  },
+  "FINAL lever=1.0 [full]": {
+    "sharpe": 0.7491250114508171,
+    "T": 7222,
+    "n_trials": 228,
+    "sr_var_trials": 0.037383995773898365,
+    "skew": -0.48408234119508253,
+    "kurt": 5.572012372537786,
+    "PSR_vs_max_of_trials": 0.8621340080344475,
+    "expected_max_null_sharpe_ann": 0.5429407655630568
+  },
+  "FINAL lever=2.5 [design]": {
+    "sharpe": 0.6355261625267665,
+    "T": 4529,
+    "n_trials": 228,
+    "sr_var_trials": 0.037383995773898365,
+    "skew": -0.3146285908806188,
+    "kurt": 6.170222430007894,
+    "PSR_vs_max_of_trials": 0.6515886623611218,
+    "expected_max_null_sharpe_ann": 0.5429407655630568
+  },
+  "FINAL lever=2.5 [holdout]": {
+    "sharpe": 0.8955253781689351,
+    "T": 2693,
+    "n_trials": 228,
+    "sr_var_trials": 0.037383995773898365,
+    "skew": -0.744226501365966,
+    "kurt": 6.343572980430336,
+    "PSR_vs_max_of_trials": 0.8700530636566909,
+    "expected_max_null_sharpe_ann": 0.5429407655630568
+  },
+  "FINAL lever=2.5 [full]": {
+    "sharpe": 0.7293024945343721,
+    "T": 7222,
+    "n_trials": 228,
+    "sr_var_trials": 0.037383995773898365,
+    "skew": -0.4615487984561216,
+    "kurt": 6.232868524693378,
+    "PSR_vs_max_of_trials": 0.8378975411365481,
+    "expected_max_null_sharpe_ann": 0.5429407655630568
+  }
+}

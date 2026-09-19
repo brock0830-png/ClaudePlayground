@@ -69,7 +69,7 @@ elif which == "robust":
         run_variant(f"final {tag}", p, band=band, hyp="FINAL", **kw)
     for a, b in [("1998-01-02", "2002-12-31"), ("2003-01-01", "2007-12-31"), ("2008-01-01", "2009-12-31"), ("2010-01-01", "2015-12-31")]:
         run_variant(f"final drop {a[:4]}-{b[:4]}", p, band=band, hyp="FINAL", drop=[(a, b)])
-    from run_phase3b import drag_panel
+    from trials import drag_panel
     for d in [-0.01, 0.01]:
         run_variant(f"final simdrag{d:+.0%}", p, band=band, hyp="FINAL", Rx=drag_panel(R, d))
 

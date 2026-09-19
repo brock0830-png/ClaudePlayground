@@ -31,7 +31,7 @@ def drag_panel(R, ann):
     return R2
 
 
-which = sys.argv[1] if len(sys.argv) > 1 else "all"
+which = sys.argv[1] if (__name__ == "__main__" and len(sys.argv) > 1) else ("all" if __name__ == "__main__" else "none")
 rows = []
 
 if which in ("all", "H1"):
@@ -92,5 +92,6 @@ if which in ("all", "robust"):
             for d in [-0.01, 0.01]:
                 m, _ = trial("P3R", hyp, f"{name} drag{d:+}", {"cell": name, "sim_drag": d}, w, drag_panel(R, d)); rows.append(row(f"{name} simdrag{d:+.0%}", m))
 
-df = pd.DataFrame(rows); df.to_csv(OUT / f"phase3b_{which}.csv", index=False)
-print(df.round(3).to_string())
+if __name__ == "__main__":
+    df = pd.DataFrame(rows); df.to_csv(OUT / f"phase3b_{which}.csv", index=False)
+    print(df.round(3).to_string())

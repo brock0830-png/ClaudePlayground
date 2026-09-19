@@ -80,3 +80,16 @@ def trial(phase, hyp, cell, params, target, R, window=DESIGN, lag=BASE_LAG, cost
     tid = log(phase, hyp, cell, params, window, lag, cost_mult, m, note)
     m["trial_id"] = tid
     return m, res
+
+
+def drag_panel(R, ann):
+    """Add `ann` per year of extra drag on simulated (pre-inception) segments of leveraged and inverse funds."""
+    import json
+    meta = json.loads((ROOT / "data/proxies/meta.json").read_text())
+    R2 = R.copy()
+    for c in LEVERAGED_COLS:
+        fund = c[:-2]
+        if f"{fund}_sim" in meta:
+            start = pd.Timestamp(meta[f"{fund}_sim"]["live_start"])
+            R2.loc[R2.index < start, c] = R2.loc[R2.index < start, c] - ann / 252
+    return R2
