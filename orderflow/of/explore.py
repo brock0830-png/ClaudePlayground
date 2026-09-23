@@ -180,3 +180,38 @@ def tercile_spread(D: pd.DataFrame, feat: str, ret: str, cut_src: pd.DataFrame) 
         desc = f"top(>{q2:.3g}) - bottom(<={q1:.3g})"
     return dict(feature=feat, compare=desc, n_top=len(g), n_bot=len(b), top=g[ret].mean(), bot=b[ret].mean(),
                 spread=g[ret].mean() - b[ret].mean(), t=diff_day_t(g[ret], g.t, b[ret], b.t))
+
+
+# ---------- causal portfolio: at most K open positions, first come first served ----------
+
+def portfolio(trades: pd.DataFrame, K: int = 10, hold_h: int = 24) -> pd.Series:
+    """trades: sym, t (signal bar), net. Entry t+1h, exit t+1h+hold. A trade is taken only if fewer than K
+    positions are open at its entry (ties in time broken by symbol); weight 1/K; P&L booked on the exit
+    day. Returns daily returns (calendar days, zeros when flat)."""
+    x = trades.assign(t=pd.to_datetime(trades.t, utc=True)).sort_values(["t", "sym"]).reset_index(drop=True)
+    entry = x.t + pd.Timedelta("1h")
+    exit_ = entry + pd.Timedelta(hours=hold_h)
+    open_exits: list = []
+    taken = np.zeros(len(x), bool)
+    for i, (e, xt) in enumerate(zip(entry, exit_)):
+        open_exits = [q for q in open_exits if q > e]
+        if len(open_exits) < K:
+            taken[i] = True
+            open_exits.append(xt)
+    y = x[taken]
+    d = (y.net / K).groupby((y.t + pd.Timedelta(hours=1 + hold_h)).dt.floor("D")).sum()
+    if len(d) == 0:
+        return d
+    idx = pd.date_range(d.index.min(), d.index.max(), freq="D")
+    out = d.reindex(idx, fill_value=0.0)
+    out.attrs["taken"] = int(taken.sum()); out.attrs["offered"] = len(x)
+    return out
+
+
+def pstats(d: pd.Series) -> dict:
+    eq = (1 + d).cumprod()
+    yrs = len(d) / 365
+    return dict(days=len(d), taken=d.attrs.get("taken"), offered=d.attrs.get("offered"),
+                CAGR=eq.iloc[-1] ** (1 / yrs) - 1 if yrs > 0 else np.nan,
+                Sharpe=d.mean() / d.std() * np.sqrt(365) if d.std() > 0 else np.nan,
+                MaxDD=(eq / eq.cummax() - 1).min(), worst_day=d.min(), t=d.mean() / (d.std() / np.sqrt(len(d))))

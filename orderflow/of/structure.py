@@ -31,21 +31,23 @@ def _session_table(b: pd.DataFrame, key: pd.Series) -> pd.DataFrame:
 
 
 def _developing(b: pd.DataFrame, key: pd.Series, hours: pd.DatetimeIndex, prefix: str) -> pd.DataFrame:
-    """Developing session profile at each hourly close. b: bars (1m or 5m) with o h l c v tbv."""
+    """Developing session profile at each hourly close. b: bars (1m or 5m) with o h l c v tbv, naive UTC index."""
     out = []
-    bt = b.index.values
-    l, hh, v, d = b.l.values, b.h.values, b.v.values, (2 * b.tbv - b.v).values
-    hk = key.reindex(hours) if isinstance(key, pd.Series) else key
-    for k, grp in pd.Series(hours, index=hours).groupby(hk.values if hasattr(hk, "values") else hk):
-        s0 = np.searchsorted(bt, np.datetime64(pd.Timestamp(k).tz_localize(None) if pd.Timestamp(k).tzinfo else pd.Timestamp(k)))
-        for t in grp.index:
-            e = np.searchsorted(bt, np.datetime64((t + pd.Timedelta("1h")).tz_localize(None)))
+    bt = b.index.as_unit("ns").asi8                        # int64 ns: keeps searchsorted O(log n)
+    o, l, hh, v = b.o.values, b.l.values, b.h.values, b.v.values
+    d = (2 * b.tbv - b.v).values
+    hk = key.reindex(hours).values
+    one_h = pd.Timedelta("1h").value
+    for k, grp in pd.Series(hours.as_unit("ns").asi8, index=hours).groupby(hk):
+        s0 = np.searchsorted(bt, pd.Timestamp(k).value)
+        for t, tv in zip(grp.index, grp.values):
+            e = np.searchsorted(bt, tv + one_h)
             if e <= s0:
                 continue
             va = profile_from_bars(l[s0:e], hh[s0:e], v[s0:e])
-            out.append((t, b.o.values[s0], va.hi, va.lo, va.poc, va.vah, va.val, d[s0:e].sum(), v[s0:e].sum()))
+            out.append((t, o[s0], va.hi, va.lo, va.poc, va.vah, va.val, d[s0:e].sum(), v[s0:e].sum()))
     cols = ["O", "H", "L", "POC", "VAH", "VAL", "DELTA", "VOL"]
-    D = pd.DataFrame([o[1:] for o in out], index=pd.DatetimeIndex([o[0] for o in out]), columns=cols)
+    D = pd.DataFrame([r[1:] for r in out], index=pd.DatetimeIndex([r[0] for r in out]), columns=cols)
     return D.add_prefix(prefix)
 
 

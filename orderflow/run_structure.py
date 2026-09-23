@@ -19,6 +19,9 @@ def one(sym):
     t0 = time.time()
     try:
         X = structure.build(load.klines_1m(sym), load.hourly(sym), load.funding(sym))
+        bad = [c for c in X.columns if X[c].dtype == object or X[c].isna().all()]
+        if bad:
+            raise ValueError(f"empty/object columns {bad}")
         out.parent.mkdir(parents=True, exist_ok=True)
         X.to_parquet(out)
         return sym, f"{len(X)} rows {time.time() - t0:.0f}s"

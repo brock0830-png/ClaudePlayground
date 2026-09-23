@@ -214,3 +214,14 @@ def test_tp_exit_hits_target_or_falls_back():
     assert r == pytest.approx(0.01 - COST_RT)
     assert explore._tp_exit(X, 3, 1, 150.0, 24) == pytest.approx(0.01)       # falls back to the 24h net
     assert explore._tp_exit(X, 3, 1, 99.0, 24) == pytest.approx(-COST_RT)     # target already through
+
+
+def test_developing_profile_works_with_millisecond_index():
+    from of import structure
+    idx = pd.date_range("2024-01-01", periods=3 * 1440, freq="1min").as_unit("ms")    # pandas 3 keeps ms
+    p = 100 + np.cumsum(rng.normal(0, 0.01, len(idx)))
+    b = pd.DataFrame({"o": p, "h": p + 0.02, "l": p - 0.02, "c": p, "v": 1.0, "tbv": 0.5}, idx)
+    hours = pd.date_range("2024-01-01", periods=72, freq="1h")
+    D = structure._developing(b, pd.Series(hours.floor("D"), index=hours), hours, "d")
+    assert len(D) == 72 and D.dL.notna().all() and D.dtypes.eq(float).all()
+    assert D.dVOL.iloc[0] == pytest.approx(60) and D.dVOL.iloc[23] == pytest.approx(1440)

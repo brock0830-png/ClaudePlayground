@@ -1,0 +1,10 @@
+                         id                part     n  days    mean  dmean     med    win      t
+A:A9L_fade_accept_below_PDL              pooled 10712   955  0.0022 0.0091  0.0023 0.5220 5.9314
+A:A9L_fade_accept_below_PDL dev coins 2024-25H1  1565   321  0.0028 0.0083  0.0033 0.5412 3.5089
+A:A9L_fade_accept_below_PDL new coins 2022-25H1  9147   947  0.0021 0.0092  0.0021 0.5187 5.8264
+                  A:A9L_mkt              pooled  6010   846 -0.0000 0.0048  0.0008 0.5073 2.8525
+                  A:A9L_mkt dev coins 2024-25H1   694   245 -0.0003 0.0042  0.0014 0.5259 1.6038
+                  A:A9L_mkt new coins 2022-25H1  5316   834  0.0000 0.0048  0.0005 0.5049 2.8024
+     A:A6L_newlow_pos_delta              pooled 16559  1242  0.0002 0.0047 -0.0018 0.4811 4.1651
+     A:A6L_newlow_pos_delta dev coins 2024-25H1  2567   519  0.0002 0.0047 -0.0006 0.4928 2.8921
+     A:A6L_newlow_pos_delta new coins 2022-25H1 13992  1242  0.0002 0.0048 -0.0021 0.4790 4.1326

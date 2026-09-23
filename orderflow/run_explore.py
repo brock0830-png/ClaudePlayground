@@ -13,7 +13,7 @@ import numpy as np                                     # noqa: E402
 import pandas as pd                                    # noqa: E402
 
 from of import explore as ex                           # noqa: E402
-from of.config import DEV, HOLDOUT, RESULTS            # noqa: E402
+from of.config import DEV, END, HOLDOUT, RESULTS, START   # noqa: E402
 
 pd.set_option("display.width", 250)
 pd.set_option("display.max_rows", 500)
@@ -36,8 +36,20 @@ def all_events(syms):
                 E["event"] = name
                 rows.append(E)
     E = pd.concat(rows, ignore_index=True)
+    E = E[(E.t >= START) & (E.t < END)].reset_index(drop=True)          # protocol dates (no Dec-2021 lookback)
     E["split"] = ex.split_of(E.sym, E.t)
-    return E
+    return add_market_filtered(E)
+
+
+def add_market_filtered(E):
+    """A9L_mkt (added after validation diagnostics, validated before the vault): A9L on alts only when BTC's
+    own close at the same bar is NOT below BTC's prior-day low (skips market-wide breakdowns)."""
+    B = ex.load_structure("BTCUSDT")
+    btc_below = (B.c < B.PDL).rename("btc_below_pdl")
+    a = E[E.event == "A9L_fade_accept_below_PDL"].merge(btc_below, left_on="t", right_index=True, how="left")
+    a = a[(a.sym != "BTCUSDT") & (a.btc_below_pdl == False)].drop(columns="btc_below_pdl")  # noqa: E712
+    a["event"] = "A9L_mkt"
+    return pd.concat([E, a], ignore_index=True)
 
 
 def screen_panel(syms, hours=(0, 12)):
@@ -50,6 +62,7 @@ def screen_panel(syms, hours=(0, 12)):
         D["t"] = D.index
         rows.append(D.reset_index(drop=True))
     D = pd.concat(rows, ignore_index=True).dropna(subset=["L24"])
+    D = D[(D.t >= START) & (D.t < END)].reset_index(drop=True)
     D["split"] = ex.split_of(D.sym, D.t)
     return D
 
