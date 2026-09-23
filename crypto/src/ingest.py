@@ -3,6 +3,7 @@
 Usage:
   python crypto/src/ingest.py tv <tool-results-dir>     -> crypto/data/tv/<TICKER>_<interval>.parquet
   python crypto/src/ingest.py user <csv> [<csv> ...]    -> crypto/data/user/<TICKER>_<interval>.parquet
+  python crypto/src/ingest.py perp <tool-results-dir>   -> crypto/data/perp/<X>USDT_{PERP,OI,PREMIUM}_<interval>.parquet
 
 Bars are indexed by bar-open time in UTC. A file for the same symbol+interval is merged (union, later pull wins).
 The last bar of a pull may still be forming; it is dropped when its close time is after the pull time.
@@ -18,6 +19,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 TV_DIR = ROOT / "data" / "tv"
+PERP_DIR = ROOT / "data" / "perp"  # perp OHLCV (.P), open interest (.P_OI), premium index (_PREMIUM)
 USER_DIR = ROOT / "data" / "user"
 BAR_SECONDS = {"1m": 60, "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "4h": 14400, "1D": 86400, "1W": 604800}
 
@@ -33,7 +35,7 @@ def _merge_write(df: pd.DataFrame, path: Path) -> pd.DataFrame:
     return df
 
 
-def ingest_tv(tool_dir: str | Path) -> list[tuple[str, int, str, str]]:
+def ingest_tv(tool_dir: str | Path, only_perp: bool = False) -> list[tuple[str, int, str, str]]:
     out = []
     for p in sorted(Path(tool_dir).glob("mcp-Tradingview_Remix-get_ohlcv-*.txt")):
         try:
@@ -43,16 +45,22 @@ def ingest_tv(tool_dir: str | Path) -> list[tuple[str, int, str, str]]:
         if not obj.get("success") or not obj.get("bars"):
             continue
         sym, iv = obj["symbol"], obj["interval"]
+        if only_perp and not (".P" in sym or sym.endswith("_PREMIUM")):
+            continue
         bars = pd.DataFrame(obj["bars"]).rename(columns={"o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"})
         bars["time"] = pd.to_datetime(bars["t"], unit="s", utc=True)
         bars = bars.set_index("time")[["open", "high", "low", "close", "volume"]].astype(float)
+        bars = bars.dropna(subset=["close"])
         # drop a still-forming last bar: pull time is the file's mtime (ms epoch in the filename)
         m = re.search(r"-(\d{13})\.txt$", p.name)
         if m:
             pulled = pd.Timestamp(int(m.group(1)), unit="ms", tz="UTC")
             bars = bars[bars.index + pd.Timedelta(seconds=BAR_SECONDS[iv]) <= pulled]
         ticker = sym.split(":")[1]
-        df = _merge_write(bars, TV_DIR / f"{ticker}_{iv}.parquet")
+        perp = ".P" in ticker or ticker.endswith("_PREMIUM")
+        if perp:
+            ticker = ticker.replace(".P_OI", "_OI").replace(".P", "_PERP")
+        df = _merge_write(bars, (PERP_DIR if perp else TV_DIR) / f"{ticker}_{iv}.parquet")
         out.append((f"{ticker}_{iv}", len(df), str(df.index[0]), str(df.index[-1])))
     return out
 
@@ -76,6 +84,7 @@ def ingest_user(paths: list[str]) -> list[tuple[str, int, str, str]]:
 
 if __name__ == "__main__":
     mode = sys.argv[1]
-    rows = ingest_tv(sys.argv[2]) if mode == "tv" else ingest_user(sys.argv[2:])
+    rows = (ingest_tv(sys.argv[2]) if mode == "tv" else ingest_tv(sys.argv[2], only_perp=True) if mode == "perp"
+            else ingest_user(sys.argv[2:]))
     for r in rows:
         print(*r, sep="\t")
