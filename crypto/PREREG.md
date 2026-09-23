@@ -4,6 +4,8 @@ Written 2026-09-23 before any crypto strategy backtest was run, and committed be
 
 The client's brief: find a positive-EV signal that can be traded repeatedly by small bots, starting from their two indicators (TD Sequential + Z-score confluence, and SigmaJanus RSI re-risk), and adding price action, volume or CVD as needed. Then deploy it.
 
+**Amendment v1 (2026-09-23, still before any backtest; the ledger does not exist yet).** A parity check of `crypto/src/indicators.py` against the client's CSV columns found that the exported `scr_conf_buy`/`scr_conf_sell` is not the Pine script the client pasted. It is a TD 9, 13-consecutive or countdown-13 bar that occurs while close is at least 3%, 4% and 5% below (buy) or above (sell) EMA 50, 100 and 200 (`scr_stack_dn`/`scr_stack_up`), with no z-score condition. The exported countdown is DeMark's, with recycle and no bar-8 qualifier. My code reproduces every signal column of all three exports bar for bar (z, 9s, 13s, countdowns, z_hi/z_lo, stacks, confluence). The export version is added to H1 as variant V6, and V5 uses the recycle countdown. H1 grows from 100 to 120 cells. Nothing else changes.
+
 ## 0. Fixed protocol
 
 | Item | Setting |
@@ -34,9 +36,10 @@ Rationale: exhaustion counts at statistical extremes should mean-revert. The cli
 | V2 looser z | V1 with threshold 2.0 |
 | V3 TD only | setup count exactly 9 or 13, no z condition (ablation) |
 | V4 Z only | z-score crosses beyond ±2.5 on this bar, no TD condition (ablation) |
-| V5 countdown | DeMark buy/sell countdown 13 (after a completed 9 setup, count bars with close <= low[2] for buys or close >= high[2] for sells, cancelled by an opposite completed setup) with the z condition of V1 |
+| V5 countdown | DeMark buy/sell countdown 13 (after a completed 9 setup, count bars with close <= low[2] for buys or close >= high[2] for sells, cancelled by an opposite completed setup, restarted by a new same-side setup) with the z condition of V1 |
+| V6 export | the client's exported confluence: TD 9, 13-consecutive or countdown 13, while the EMA 50/100/200 stack is stretched by at least 3%/4%/5% in the signal's direction |
 
-Grid: variant (5) x holding H in {4, 8, 16, 32 bars, "z-exit" = exit at the first open after z crosses 0, capped at 32 bars} x side {long, short} x group {G30, G4h}. 100 cells. **Reference cell: H = 8.**
+Grid: variant (6) x holding H in {4, 8, 16, 32 bars, "z-exit" = exit at the first open after z crosses 0, capped at 32 bars} x side {long, short} x group {G30, G4h}. 120 cells. **Reference cell: H = 8.**
 
 ### H2. SigmaJanus re-risk (the client's RSI indicator)
 
@@ -99,4 +102,4 @@ The cell deployed from a family is the one with the highest design Sharpe among 
 
 ## 4. Planned cell count
 
-H1 100 + H2 24 + H3 48 + H4 14 + H5 12 = 198 design cells, plus delay, cost, sub-period and benchmark rows. Every row is ledgered.
+H1 120 + H2 24 + H3 48 + H4 14 + H5 12 = 218 design cells, plus delay, cost, sub-period and benchmark rows. Every row is ledgered.
