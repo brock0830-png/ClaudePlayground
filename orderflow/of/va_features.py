@@ -11,8 +11,6 @@ check against the claude.ai run; they are not part of this pass rule.
 """
 from __future__ import annotations
 
-from collections import OrderedDict
-
 import numpy as np
 import pandas as pd
 
@@ -110,40 +108,57 @@ def exit_x1(row, m1: pd.DataFrame, f: pd.Series) -> dict:
     return dict(x1_hit=1, x1_t=fill_t, x1_net=px / e - 1 - COST_RT - fund)
 
 
+def _prefetched(sym: str, days: list[str], inflight: int = 8):
+    """Yield (day, zip bytes | None) in order, with at most `inflight` downloads outstanding."""
+    from collections import deque
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(inflight) as ex:
+        win = deque()
+        for d in days:
+            win.append((d, ex.submit(fetch.get_bytes, fetch.aggtrades_rel(sym, d))))
+            if len(win) >= inflight:
+                dd, f = win.popleft(); yield dd, f.result()
+        while win:
+            dd, f = win.popleft(); yield dd, f.result()
+
+
 def coin_features(sym: str, tr: pd.DataFrame, h: pd.DataFrame, m1: pd.DataFrame, f: pd.Series,
-                  workers: int = 6, keep_days: int = 3) -> pd.DataFrame:
-    """Features for all signals of one coin, streaming its aggTrades days in time order."""
+                  inflight: int = 8) -> pd.DataFrame:
+    """Features for all signals of one coin. aggTrades days are streamed through memory in time
+    order (bounded prefetch) and never written to disk."""
     if len(tr) == 0:
         return pd.DataFrame()
     tr = tr.sort_values("t").reset_index(drop=True)
     atr = atr_wilder(h)
-    need = sorted({d for t in tr.t for d in days_needed(t)})
-    got = fetch.get_many([fetch.aggtrades_rel(sym, d) for d in need], workers=workers, label=f"{sym} aggTrades")
-    cache: OrderedDict[str, dict] = OrderedDict()
+    sig_days = {r.Index: days_needed(r.t) for r in tr.itertuples()}
+    by_last = {}
+    for i, ds in sig_days.items():
+        by_last.setdefault(ds[-1], []).append(i)
+    need = sorted({d for ds in sig_days.values() for d in ds})
+    cache: dict[str, dict | None] = {}
+    ms = lambda x: int(x.value // 1_000_000)
     out = []
-    for r in tr.itertuples():
-        ds = days_needed(r.t)
-        parsed = []
-        for d in ds:
-            if d not in cache:
-                pth = got.get(fetch.aggtrades_rel(sym, d))
-                cache[d] = aggtrades.parse(pth) if pth is not None else None
-                while len(cache) > keep_days:
-                    cache.popitem(last=False)
-            parsed.append(cache[d])
-        ms = lambda x: int(x.value // 1_000_000)
-        w0 = aggtrades.window(parsed, ms(r.t - 29 * H), ms(r.t - 5 * H))
-        w1 = aggtrades.window(parsed, ms(r.t - 5 * H), ms(r.t + H))
-        rec = dict(sym=sym, t=r.t)
-        if len(w0["p"]) < 100 or len(w1["p"]) < 100 or any(p is None for p in parsed):
-            rec["missing"] = 1
-            out.append(rec); continue
-        rec.update(features_for(w0, w1, float(h.at[r.t, "c"]), float(atr.at[r.t])))
-        f1, f2, f3, f4 = old_footprint(w1, float(h.at[r.t, "c"]))
-        rec.update(F1_trapped=f1, F2_absorb=f2, F3_thin=f3, F4_stacked=f4, missing=0)
-        out.append(rec)
-    F = pd.DataFrame(out)
-    F = tr.merge(F, on=["sym", "t"], how="left")
+    for d, blob in _prefetched(sym, need, inflight):
+        cache[d] = aggtrades.parse(blob) if blob is not None else None
+        for k in [k for k in cache if pd.Timestamp(k) < pd.Timestamp(d) - pd.Timedelta(days=2)]:
+            del cache[k]
+        for i in by_last.get(d, []):
+            r = tr.loc[i]
+            parsed = [cache.get(x) for x in sig_days[i]]
+            rec = dict(sym=sym, t=r.t)
+            if any(p is None for p in parsed):
+                rec["missing"] = 1; out.append(rec); continue
+            w0 = aggtrades.window(parsed, ms(r.t - 29 * H), ms(r.t - 5 * H))
+            w1 = aggtrades.window(parsed, ms(r.t - 5 * H), ms(r.t + H))
+            if len(w0["p"]) < 100 or len(w1["p"]) < 100:
+                rec["missing"] = 1; out.append(rec); continue
+            c = float(h.at[r.t, "c"])
+            rec.update(features_for(w0, w1, c, float(atr.at[r.t])))
+            f1, f2, f3, f4 = old_footprint(w1, c)
+            rec.update(F1_trapped=f1, F2_absorb=f2, F3_thin=f3, F4_stacked=f4, missing=0)
+            out.append(rec)
+    F = tr.merge(pd.DataFrame(out), on=["sym", "t"], how="left")
+    F["missing"] = F["missing"].fillna(1).astype(int)
     x1 = [exit_x1(r, m1, f) if r.missing == 0 else dict(x1_hit=np.nan, x1_t=pd.NaT, x1_net=np.nan)
           for r in F.itertuples()]
     return pd.concat([F, pd.DataFrame(x1, index=F.index)], axis=1)

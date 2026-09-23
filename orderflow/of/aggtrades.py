@@ -13,9 +13,12 @@ TYPES = {"agg_trade_id": pa.int64(), "price": pa.float64(), "quantity": pa.float
          "last_trade_id": pa.int64(), "transact_time": pa.int64(), "is_buyer_maker": pa.bool_()}
 
 
-def parse(path) -> dict:
-    """Return dict of numpy arrays p, q, ts (ms), sell (True = aggressive SELL), sorted by time."""
-    with zipfile.ZipFile(path) as z:
+def parse(src) -> dict:
+    """src: path or zip bytes. Returns dict of numpy arrays p, q, ts (ms), sell (True = aggressive
+    SELL), sorted by time."""
+    if isinstance(src, (bytes, bytearray)):
+        src = io.BytesIO(src)
+    with zipfile.ZipFile(src) as z:
         raw = z.read(z.namelist()[0])
     has_hdr = raw[:1].isalpha()
     t = pcsv.read_csv(io.BytesIO(raw),

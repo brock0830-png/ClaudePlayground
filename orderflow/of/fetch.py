@@ -65,6 +65,27 @@ def get(rel: str, retries: int = 5):
     raise RuntimeError(f"failed {url}: {err}")
 
 
+def get_bytes(rel: str, retries: int = 6):
+    """Fetch BASE_URL/rel into memory without caching (for the large aggTrades files).
+    Uses the disk cache if the file happens to be there. Returns bytes, or None on 404."""
+    p = local(rel)
+    if p.exists():
+        return p.read_bytes()
+    url = f"{BASE_URL}/{rel}"
+    err = None
+    for k in range(retries):
+        try:
+            r = _sess().get(url, timeout=300)
+            if r.status_code == 404:
+                return None
+            r.raise_for_status()
+            return r.content
+        except Exception as e:
+            err = e
+            time.sleep(2 ** k)
+    raise RuntimeError(f"failed {url}: {err}")
+
+
 def get_many(rels, workers: int = 8, label: str = ""):
     """Fetch many files with at most `workers` in flight. Returns {rel: path|None}."""
     rels = list(dict.fromkeys(rels))

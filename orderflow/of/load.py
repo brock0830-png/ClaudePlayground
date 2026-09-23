@@ -19,7 +19,7 @@ TAIL_DAYS = 3          # daily files after END so trades entered on the last day
 def _ts_ms(x: pd.Series) -> pd.DatetimeIndex:
     x = x.astype("int64")
     unit = "us" if x.iloc[0] > 10 ** 14 else "ms"
-    return pd.to_datetime(x, unit=unit, utc=True)
+    return pd.DatetimeIndex(pd.to_datetime(x.values, unit=unit, utc=True))
 
 
 def _parse_klines(path) -> pd.DataFrame:

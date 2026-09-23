@@ -54,3 +54,21 @@ spec leaves open. None of them changes a feature, a direction, a cutoff rule or 
 - Daily-P&L Sharpe: fixed notional per trade, each trade's net booked on its UTC exit day, calendar days
   with no exits = 0, from the cell's start to the later of its end and its last exit. Annualized with
   sqrt(365). The same definition is used for the 24h exit. Total return = sum of trade nets.
+
+## Deviation recorded after the replication count (before any feature or return was computed)
+
+The notes above fixed OI = `sum_open_interest_value` (USD). The first thing run on real data was the
+signal count on the 9 dev coins (counts only):
+
+| OI measure | every bar | first bar of run | non-overlap | (extra: first-of-run then non-overlap) | (extra: 48h cooldown) |
+|---|---|---|---|---|---|
+| USD value (`sum_open_interest_value`) | 30,200 | 5,674 | 3,163 | 2,963 | 2,491 |
+| contracts (`sum_open_interest`) | 16,473 | 3,534 | **2,028** | 1,950 | 1,726 |
+
+No USD-value rule comes near 1,968. In USD value, a -4.6% price move by itself takes OI value down about
+4.6%, so the -1.8% OI filter barely binds. With OI in contracts and one position per coin, the count is
+2,028 (+3%). "USD-mode" in the thread most likely meant Binance **USDⓈ-M** futures, not USD-valued OI.
+
+**Signal definition used: OI in contracts (`sum_open_interest`), non-overlap dedup.** Per the rule above,
+this is the closest of the three pre-listed dedup rules, now applied over both OI measures. It was
+chosen on counts only. The extra variants were counted for information and not used.
