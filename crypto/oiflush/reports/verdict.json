@@ -1,0 +1,11 @@
+{
+  "O1 net>0 both periods": true,
+  "O2 weekly t>=2 full": true,
+  "O3 excess>0 both": true,
+  "O4 1h late net>0 both": true,
+  "O5 neighbourhood median>0 both": true,
+  "O6 X7 full net>0": true,
+  "O7 20bp RT net>0 both": true,
+  "O8 capped pf Sharpe>=1, DD>-25%": false,
+  "PASS": false
+}

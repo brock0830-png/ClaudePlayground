@@ -12,6 +12,8 @@ Protocol: `crypto/PREREG.md`, committed before any backtest (`11c5c61`, amendmen
 > **Phase 2 (perp data: open interest, funding, OBV): see `crypto/perp/REPORT_PERP.md`.** None of 28 pre-registered perp signal families passed, and neither did funding carry. The best near-misses lost money on the holdout. The trend basket is still the only rule that passed.
 >
 > **Phase 3 (Binance archive: taker/aggressive flow, CVD, top-trader vs retail positioning, order-book depth, tick footprints, real funding): see `crypto/flow/REPORT_FLOW.md`.** None of 32 families passed. Carry on real funding earned 2.3%/yr in 2022-2024 but lost money in 2025-2026, when funding halved. The trend basket remains the only rule with a clean pass.
+>
+> **OI Flush Signals v2 (the client's indicator from another thread): see `crypto/oiflush/REPORT_OIFLUSH.md`.** It replicates on independent Binance data: +0.32% and +0.55% net per trade in 2022-23 and 2024-26, positive in every nearby setting and on 7 coins it was never built on. It fails the pre-registered portfolio check (Sharpe 0.81, -41% drawdown standalone). Blended with the trend basket it is exploratory but promising (correlation 0.10). It is a paper forward-test candidate.
 
 ## 2. What was tested
 
