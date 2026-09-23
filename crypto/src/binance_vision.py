@@ -5,6 +5,7 @@ bucket's S3 endpoint. Raw zips go to crypto/data/cache/bv (git-ignored). Condens
 
   python crypto/src/binance_vision.py klines      # 15m USD-M perp klines with taker buy volume, 16 coins, 2022-01 on
   python crypto/src/binance_vision.py funding     # actual funding prints
+  python crypto/src/binance_vision.py premium     # 1h premium index klines (basis marks for carry)
   python crypto/src/binance_vision.py metrics     # 5-min OI, top-trader / global long-short ratios, taker ratio
   python crypto/src/binance_vision.py bookdepth   # order-book depth at +-1..5%, 5 majors, 2023-01 on -> 15m imbalance
   python crypto/src/binance_vision.py footprint   # aggTrades -> 1h footprint features, BTC ETH SOL, 2024-01 on
@@ -93,6 +94,22 @@ def klines(iv="15m"):
         print(c, len(df), df.index[0], df.index[-1], f"{sum(ok)}/{len(ok)} files")
 
 
+def premium(iv="1h"):
+    """Premium index klines (perp vs index, as a fraction) to mark the spot/perp basis in the carry test."""
+    for c in U16:
+        s = f"{c}USDT"
+        jobs = [(f"{BASE}/monthly/premiumIndexKlines/{s}/{iv}/{s}-{iv}-{m}.zip", CACHE / "premium" / s / f"{m}.zip") for m in months()]
+        ok = pull(jobs)
+        frames = [read_zip_csv(p, KCOLS) for (_, p), o in zip(jobs, ok) if o]
+        if not frames:
+            continue
+        df = pd.concat(frames)
+        df["time"] = pd.to_datetime(df["open_time"].astype("int64"), unit="ms", utc=True)
+        df = df.drop_duplicates("time").set_index("time").sort_index()[["open", "close"]].astype(float)
+        df.to_parquet(OUT / f"{c}_premium_1h.parquet")
+        print(c, len(df), df.index[0], df.index[-1])
+
+
 def funding():
     for c in U16:
         s = f"{c}USDT"
@@ -167,8 +184,8 @@ def bookdepth():
         print(c, len(df), df.index[0], df.index[-1], f"{sum(ok)}/{len(ok)} files")
 
 
-def _foot_day(p: Path) -> pd.DataFrame:
-    """1h footprint features from aggTrades: aggressive volume by side in the bottom/top 20% of each hour's range."""
+def _foot_day_pandas(p: Path) -> pd.DataFrame:
+    """Reference implementation (slow); _foot_day must match it."""
     t = read_zip_csv(p, ["agg_trade_id", "price", "quantity", "first_trade_id", "last_trade_id", "transact_time",
                          "is_buyer_maker"])
     t["time"] = pd.to_datetime(t["transact_time"].astype("int64"), unit="ms", utc=True)
@@ -186,15 +203,53 @@ def _foot_day(p: Path) -> pd.DataFrame:
     agg["buy_bot"] = t[t["bot"]].groupby("hour")["buy_q"].sum()
     agg["buy_top"] = t[t["top"]].groupby("hour")["buy_q"].sum()
     agg["sell_top"] = t[t["top"]].groupby("hour")["sell_q"].sum()
-    # point of control: price bucket (20 buckets of the hour's range) with the most volume, as a 0..1 position
     b = (pos.clip(0, 1) * 19.999).fillna(10).astype(int)
     vp = t.assign(b=b).groupby(["hour", "b"])["quantity"].sum()
     agg["poc"] = vp.groupby(level=0).idxmax().map(lambda x: (x[1] + 0.5) / 20.0)
     return agg.fillna(0.0)
 
 
-def footprint(start="2024-01-01"):
-    for c in FOOT3:
+def _foot_day(p: Path) -> pd.DataFrame:
+    """1h footprint features from aggTrades: aggressive volume by side in the bottom/top 20% of each hour's range,
+    and the point of control (20-bucket volume profile peak) as a 0..1 position. pyarrow + numpy version."""
+    import pyarrow.csv as pacsv
+    with zipfile.ZipFile(p) as z:
+        raw = z.read(z.namelist()[0])
+    names = ["agg_trade_id", "price", "quantity", "first_trade_id", "last_trade_id", "transact_time", "is_buyer_maker"]
+    first = raw[:100].decode(errors="ignore").split("\n")[0]
+    has_header = any(ch.isalpha() for ch in first.split(",")[0])
+    tbl = pacsv.read_csv(io.BytesIO(raw), read_options=pacsv.ReadOptions(column_names=None if has_header else names),
+                         convert_options=pacsv.ConvertOptions(include_columns=["price", "quantity", "transact_time", "is_buyer_maker"]))
+    price = tbl["price"].to_numpy().astype(float)
+    qty = tbl["quantity"].to_numpy().astype(float)
+    ms = tbl["transact_time"].to_numpy().astype(np.int64)
+    ibm = tbl["is_buyer_maker"].to_numpy()
+    sell = ibm.astype(bool) if ibm.dtype == bool else np.char.lower(ibm.astype(str)) == "true"
+    hour = ms // 3_600_000
+    order = np.argsort(hour, kind="stable")
+    hour, price, qty, sell = hour[order], price[order], qty[order], sell[order]
+    starts = np.flatnonzero(np.r_[True, hour[1:] != hour[:-1]])
+    hid = np.repeat(np.arange(len(starts)), np.diff(np.r_[starts, len(hour)]))
+    lo = np.minimum.reduceat(price, starts)[hid]
+    hi = np.maximum.reduceat(price, starts)[hid]
+    rng = hi - lo
+    with np.errstate(divide="ignore", invalid="ignore"):
+        pos = np.where(rng > 0, (price - lo) / rng, np.nan)
+    buy_q, sell_q = np.where(sell, 0.0, qty), np.where(sell, qty, 0.0)
+    bot, top = pos <= 0.2, pos >= 0.8
+    red = lambda x: np.add.reduceat(x, starts)  # noqa: E731
+    b = np.where(np.isnan(pos), 10, (np.clip(pos, 0, 1) * 19.999).astype(int))
+    prof = np.bincount(hid * 20 + b, weights=qty, minlength=len(starts) * 20).reshape(len(starts), 20)
+    idx = pd.to_datetime(hour[starts] * 3_600_000, unit="ms", utc=True)
+    out = pd.DataFrame({"vol": red(qty), "buy": red(buy_q), "sell": red(sell_q), "sell_bot": red(sell_q * bot),
+                        "buy_bot": red(buy_q * bot), "buy_top": red(buy_q * top), "sell_top": red(sell_q * top),
+                        "poc": (prof.argmax(axis=1) + 0.5) / 20.0}, index=idx)
+    out.index.name = "hour"
+    return out
+
+
+def footprint(*coins, start="2024-01-01"):
+    for c in (coins or FOOT3):
         s = f"{c}USDT"
         frames = []
         ds = days(pd.Timestamp(start), END)
@@ -218,4 +273,5 @@ def footprint(start="2024-01-01"):
 
 
 if __name__ == "__main__":
-    {"klines": klines, "funding": funding, "metrics": metrics, "bookdepth": bookdepth, "footprint": footprint}[sys.argv[1]]()
+    {"klines": klines, "funding": funding, "premium": premium, "metrics": metrics, "bookdepth": bookdepth,
+     "footprint": footprint}[sys.argv[1]](*sys.argv[2:])
