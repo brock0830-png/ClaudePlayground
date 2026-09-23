@@ -1,0 +1,10 @@
+                         id   part     n     days    mean  dmean     med    win      t  spread  t_spread     good_n  good_mean  good_t  all_mean
+A:A9L_fade_accept_below_PDL pooled  5166 337.0000 -0.0026 0.0058 -0.0021 0.4760 2.6066     NaN       NaN        NaN        NaN     NaN       NaN
+     A:A6L_newlow_pos_delta pooled  7864 424.0000 -0.0020 0.0034 -0.0029 0.4594 1.9462     NaN       NaN        NaN        NaN     NaN       NaN
+                 C:pos_d:lo pooled 20538      NaN     NaN    NaN     NaN    NaN    NaN  0.0003    3.1558 10810.0000    -0.0021  1.0670   -0.0025
+           C:below_pdval:hi pooled 29890      NaN     NaN    NaN     NaN    NaN    NaN  0.0011    2.7903  7901.0000    -0.0017  0.8774   -0.0025
+               C:x_PDVAL:lo pooled 19853      NaN     NaN    NaN     NaN    NaN    NaN  0.0009    2.8256  9902.0000    -0.0019  1.2294   -0.0025
+
+VAULT portfolio view (K=10, first come first served, 1/K each):
+  A9L (finalist)                           trades  5166 per-trade -0.259% day-t +2.61 | portfolio CAGR -46.4% Sharpe -1.30 MaxDD -60.0% taken 2010/5166
+  flush (NOT clean: inside spec cells)     trades  1902 per-trade -0.085% day-t +1.12 | portfolio CAGR -29.1% Sharpe -0.84 MaxDD -50.3% taken 1313/1902

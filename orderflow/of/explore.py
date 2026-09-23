@@ -49,10 +49,13 @@ def summarize(E: pd.DataFrame, col: str = "net") -> dict:
     return dict(n=len(E), days=nd, mean=E[col].mean(), dmean=dm, med=E[col].median(), win=(E[col] > 0).mean(), t=t)
 
 
+LEDGER_FIELDS = ["logged", "family", "split", "id", "n", "days", "mean", "dmean", "med", "win", "t", "note"]
+
+
 def log(rows: list[dict]):
+    """Append rows to the ledger with a fixed column set (missing keys left blank)."""
     now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M")
-    D = pd.DataFrame(rows)
-    D.insert(0, "logged", now)
+    D = pd.DataFrame(rows).assign(logged=now).reindex(columns=LEDGER_FIELDS)
     D.to_csv(LEDGER, mode="a", header=not LEDGER.exists(), index=False)
 
 

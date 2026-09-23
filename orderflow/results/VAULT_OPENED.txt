@@ -1,0 +1,5 @@
+A:A9L_fade_accept_below_PDL
+A:A6L_newlow_pos_delta
+C:pos_d:lo
+C:below_pdval:hi
+C:x_PDVAL:lo
