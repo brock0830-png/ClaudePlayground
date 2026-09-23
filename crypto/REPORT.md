@@ -9,6 +9,8 @@ Protocol: `crypto/PREREG.md`, committed before any backtest (`11c5c61`, amendmen
 - **Its edge is trend-following exposure management, not stock-picking.** On the holdout it roughly matches the simplest benchmark, BTC above its 100-day SMA (28.0% / 0.91 / -36.4%), at higher CAGR but similar Sharpe. What it reliably adds is keeping you out of alts in BTC downtrends. Treat the holdout numbers, not the design numbers, as the expectation.
 - **Deployed:** `crypto/bot/` trades exactly this rule. Replayed through all 996 holdout days, it reproduces the backtest to machine precision. It runs in paper mode by default, and live trading needs a double opt-in.
 
+> **Phase 2 (perp data: open interest, funding, OBV): see `crypto/perp/REPORT_PERP.md`.** None of 28 pre-registered perp signal families passed, and neither did funding carry. The best near-misses lost money on the holdout. The trend basket is still the only rule that passed.
+
 ## 2. What was tested
 
 | Hypothesis | Rule | Grid | Data |
