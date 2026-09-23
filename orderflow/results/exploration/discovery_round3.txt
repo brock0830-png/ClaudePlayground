@@ -1,0 +1,14 @@
+A:A9L_fade_accept_below_PDL                      n= 1993 days= 437 trade-mean=+0.075% day-mean=+0.772% win=0.538 t=+3.66
+A:A9L_fade_accept_below_PDL:tp(back to level)    n= 1993 days= 437 trade-mean=-0.077% day-mean=+0.082% win=0.704 t=+1.02
+A:A9S_fade_accept_above_PDH                      n= 2083 days= 547 trade-mean=-0.007% day-mean=+0.510% win=0.539 t=+3.01
+A:A9S_fade_accept_above_PDH:tp(back to level)    n= 2083 days= 547 trade-mean=-0.188% day-mean=+0.110% win=0.718 t=+1.34
+A:A6L_newlow_pos_delta                           n= 2977 days= 680 trade-mean=+0.065% day-mean=+0.394% win=0.483 t=+2.21
+A:A6S_newhigh_neg_delta                          n= 4131 days= 727 trade-mean=-0.001% day-mean=+0.342% win=0.512 t=+2.50
+A:A1L_fail_below_PDL                             n= 2633 days= 553 trade-mean=+0.002% day-mean=+0.210% win=0.537 t=+1.26
+A:A1S_fail_above_PDH                             n= 2610 days= 616 trade-mean=-0.033% day-mean=+0.154% win=0.534 t=+1.02
+
+-- flush signal, hold-period variants (DISCOVERY)
+flush_hold4h                                     n=  919 days= 333 trade-mean=+0.083% day-mean=+0.378% win=0.547 t=+3.59
+flush_hold12h                                    n=  917 days= 332 trade-mean=+0.092% day-mean=+0.574% win=0.530 t=+3.48
+flush_hold24h                                    n=  917 days= 332 trade-mean=+0.357% day-mean=+0.802% win=0.559 t=+3.29
+flush_hold48h                                    n=  915 days= 332 trade-mean=+0.402% day-mean=+0.707% win=0.525 t=+1.86

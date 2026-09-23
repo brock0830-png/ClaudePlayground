@@ -1,0 +1,25 @@
+
+== discovery
+all                                          n=  1993 days=  437 trade=+0.075% day=+0.772% win=0.538 t=+3.66
+no flush signal within 24h                   n=  1149 days=  379 trade=+0.513% day=+0.729% win=0.586 t=+3.16
+flush signal within 24h                      n=   844 days=  265 trade=-0.522% day=+0.244% win=0.473 t=+0.85
+year 2021                                    n=   106 days=   18 trade=-0.087% day=+0.453% win=0.462 t=+0.39
+year 2022                                    n=  1099 days=  222 trade=-0.157% day=+0.550% win=0.520 t=+1.81
+year 2023                                    n=   788 days=  197 trade=+0.420% day=+1.052% win=0.572 t=+3.47
+
+== validation
+all                                          n= 10886 days=  975 trade=+0.217% day=+0.901% win=0.521 t=+5.94
+no flush signal within 24h                   n=  5179 days=  843 trade=+0.790% day=+1.014% win=0.577 t=+6.78
+flush signal within 24h                      n=  5707 days=  788 trade=-0.303% day=+0.521% win=0.469 t=+2.88
+year 2021                                    n=   174 days=   20 trade=+0.049% day=+0.720% win=0.437 t=+0.56
+year 2022                                    n=  2093 days=  261 trade=-0.114% day=+0.578% win=0.516 t=+1.76
+year 2023                                    n=  2185 days=  271 trade=+0.403% day=+0.828% win=0.539 t=+3.57
+year 2024                                    n=  4206 days=  289 trade=+0.498% day=+1.383% win=0.527 t=+5.11
+year 2025                                    n=  2228 days=  134 trade=-0.173% day=+0.670% win=0.501 t=+1.46
+
+validation per coin: coins with mean > 0: 30 of 35
+sym    FILUSDT  SANDUSDT  ARBUSDT  APTUSDT  AVAXUSDT  GALAUSDT  LTCUSDT  TIAUSDT  MANAUSDT  AXSUSDT   OPUSDT  1000SHIBUSDT  UNIUSDT  ICPUSDT  LINKUSDT  XLMUSDT  FETUSDT  SOLUSDT  SEIUSDT  AAVEUSDT  HBARUSDT  BTCUSDT  ALGOUSDT  ETHUSDT  DOGEUSDT  INJUSDT  ETCUSDT  XRPUSDT  LDOUSDT  ADAUSDT  1000PEPEUSDT  BCHUSDT  SUIUSDT  CRVUSDT  WIFUSDT
+count  371.000   416.000  266.000  308.000   192.000   408.000  157.000  224.000   417.000  432.000  389.000       371.000  426.000  388.000   195.000  427.000  285.000   182.00  240.000   435.000   433.000  161.000   442.000  154.000   172.000  348.000  398.000   169.00   351.00  183.000       255.000  401.000  265.000  425.000  200.000
+mean    -0.615    -0.239   -0.189   -0.113    -0.004     0.033    0.035    0.049     0.051    0.059    0.069         0.085    0.087    0.142     0.193    0.241    0.282     0.29    0.295     0.305     0.317    0.329     0.357    0.369     0.387    0.416    0.437     0.45     0.45    0.491         0.523    0.543    0.605    0.657    0.827
+discovery: daily-sum Sharpe 0.21, total 149% (sum of trade %), max drawdown of cumulative sum -500%, worst day -117%
+validation: daily-sum Sharpe 0.50, total 2361% (sum of trade %), max drawdown of cumulative sum -1478%, worst day -836%

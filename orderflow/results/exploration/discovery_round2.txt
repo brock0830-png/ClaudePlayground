@@ -1,0 +1,34 @@
+R2:posd_bottom_long@00                                       n= 2276 days= 482 mean=+0.239% win=0.502 t=+0.64
+R2:posd_top_short@00                                         n= 2276 days= 480 mean=+0.202% win=0.518 t=+0.41
+R2:posd_bottom_long@12                                       n= 2276 days= 522 mean=-0.051% win=0.482 t=-1.18
+R2:posd_top_short@12                                         n= 2276 days= 524 mean=+0.130% win=0.529 t=-0.15
+R2:posd_bottom_long@04                                       n= 2276 days= 526 mean=-0.073% win=0.470 t=-0.50
+R2:posd_top_short@04                                         n= 2276 days= 540 mean=-0.002% win=0.509 t=-0.33
+R2:posd_bottom_long@08                                       n= 2276 days= 507 mean=+0.172% win=0.477 t=-0.13
+R2:posd_top_short@08                                         n= 2276 days= 519 mean=+0.003% win=0.507 t=+0.25
+R2:posd_bottom_long@16                                       n= 2276 days= 473 mean=-0.137% win=0.482 t=-1.03
+R2:posd_top_short@16                                         n= 2276 days= 514 mean=+0.061% win=0.525 t=-0.26
+R2:posd_bottom_long@20                                       n= 2276 days= 482 mean=+0.011% win=0.503 t=-1.17
+R2:posd_top_short@20                                         n= 2276 days= 511 mean=-0.155% win=0.498 t=-1.00
+R2:pospd_bottom_long@00                                      n= 2273 days= 476 mean=-0.158% win=0.506 t=-1.65
+R2:pospd_top_short@00                                        n= 2273 days= 512 mean=-0.059% win=0.539 t=-0.18
+R2:pospd_bottom_long@12                                      n= 2273 days= 467 mean=+0.023% win=0.505 t=-0.24
+R2:pospd_top_short@12                                        n= 2273 days= 545 mean=-0.004% win=0.532 t=-0.97
+
+-- double sort at 12:00: mean GROSS 24h return, rows = ret24 tercile, cols = pos_d tercile
+p_t     p_lo  p_mid   p_hi
+r_t                       
+r_lo   0.059  0.463  0.005
+r_mid -0.163 -0.135 -0.306
+r_hi   0.597  0.226 -0.316
+p_t    p_lo  p_mid  p_hi
+r_t                     
+r_lo   1099    770   402
+r_mid   731    809   731
+r_hi    442    692  1137
+
+-- reversed event trades
+R2:reverse_A3L_accept_above_PDH                              n= 2083 days= 547 mean=-0.007% win=0.539 t=+3.01
+R2:reverse_A3S_accept_below_PDL                              n= 1993 days= 437 mean=+0.075% win=0.538 t=+3.66
+R2:reverse_A4L_80pct_from_below                              n=  886 days= 285 mean=-0.165% win=0.497 t=+0.96
+R2:reverse_A4S_80pct_from_above                              n=  911 days= 329 mean=+0.325% win=0.487 t=+1.38

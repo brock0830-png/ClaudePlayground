@@ -1,0 +1,19 @@
+A9L alts | BTC also below its PDL                          n=  899 days= 201 trade-mean=-0.042% day-mean=+0.535% win=0.521 t=+1.62
+A9L alts | BTC NOT below its PDL                           n=  880 days= 330 trade-mean=+0.217% day-mean=+0.582% win=0.544 t=+2.17
+A9S alts | BTC also above its PDH                          n=  791 days= 201 trade-mean=-0.007% day-mean=+0.365% win=0.536 t=+1.35
+A9S alts | BTC NOT above its PDH                           n= 1069 days= 456 trade-mean=+0.012% day-mean=+0.172% win=0.535 t=+0.82
+A9L_fade_accept_below_PDL | breadth so far <= 2            n=  510 days= 338 trade-mean=+0.509% day-mean=+0.609% win=0.569 t=+2.34
+A9L_fade_accept_below_PDL | breadth so far >= 3            n= 1483 days= 276 trade-mean=-0.075% day-mean=+0.355% win=0.527 t=+1.48
+A9S_fade_accept_above_PDH | breadth so far <= 2            n=  774 days= 491 trade-mean=-0.284% day-mean=-0.030% win=0.519 t=-0.14
+A9S_fade_accept_above_PDH | breadth so far >= 3            n= 1309 days= 300 trade-mean=+0.157% day-mean=+0.468% win=0.551 t=+2.18
+A6L_newlow_pos_delta | breadth so far <= 2                 n=  844 days= 519 trade-mean=-0.215% day-mean=-0.085% win=0.473 t=-0.39
+A6L_newlow_pos_delta | breadth so far >= 3                 n= 2133 days= 508 trade-mean=+0.176% day-mean=+0.289% win=0.487 t=+1.54
+A6S_newhigh_neg_delta | breadth so far <= 2                n=  810 days= 488 trade-mean=-0.196% day-mean=-0.168% win=0.514 t=-0.85
+A6S_newhigh_neg_delta | breadth so far >= 3                n= 3321 days= 641 trade-mean=+0.047% day-mean=+0.269% win=0.512 t=+1.80
+
+flush alts: excess 24h drop vs BTC terciles (cutoffs -0.0419 / -0.0240)
+flush alts | excess drop bottom third (most idiosyncratic) n=  292 days= 193 trade-mean=+0.617% day-mean=+0.475% win=0.558 t=+1.15
+flush alts | excess drop middle third                      n=  291 days= 177 trade-mean=+0.313% day-mean=+0.342% win=0.564 t=+0.93
+flush alts | excess drop top third (moved with BTC)        n=  291 days= 129 trade-mean=+0.203% day-mean=+0.504% win=0.570 t=+1.32
+flush alts | BTC 24h ret > -2%                             n=  315 days= 193 trade-mean=+0.232% day-mean=+0.234% win=0.578 t=+0.62
+flush alts | BTC 24h ret <= -2%                            n=  559 days= 200 trade-mean=+0.460% day-mean=+0.852% win=0.556 t=+2.48

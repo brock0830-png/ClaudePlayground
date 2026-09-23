@@ -1,0 +1,40 @@
+                         id                part     n      days    mean  dmean     med    win      t  spread  t_spread     good_n  good_mean  good_t  all_mean
+A:A9L_fade_accept_below_PDL              pooled 10886  975.0000  0.0022 0.0090  0.0022 0.5207 5.9417     NaN       NaN        NaN        NaN     NaN       NaN
+A:A9L_fade_accept_below_PDL dev coins 2024-25H1  1565  321.0000  0.0028 0.0083  0.0033 0.5412 3.5089     NaN       NaN        NaN        NaN     NaN       NaN
+A:A9L_fade_accept_below_PDL new coins 2022-25H1  9321  967.0000  0.0021 0.0092  0.0020 0.5172 5.8403     NaN       NaN        NaN        NaN     NaN       NaN
+A:A9S_fade_accept_above_PDH              pooled 10724 1115.0000 -0.0022 0.0073  0.0024 0.5252 5.3674     NaN       NaN        NaN        NaN     NaN       NaN
+A:A9S_fade_accept_above_PDH dev coins 2024-25H1  1670  402.0000 -0.0027 0.0042  0.0003 0.5054 2.2161     NaN       NaN        NaN        NaN     NaN       NaN
+A:A9S_fade_accept_above_PDH new coins 2022-25H1  9054 1094.0000 -0.0021 0.0074  0.0029 0.5288 5.2526     NaN       NaN        NaN        NaN     NaN       NaN
+     A:A6L_newlow_pos_delta              pooled 16723 1271.0000  0.0002 0.0046 -0.0017 0.4813 4.0737     NaN       NaN        NaN        NaN     NaN       NaN
+     A:A6L_newlow_pos_delta dev coins 2024-25H1  2567  519.0000  0.0002 0.0047 -0.0006 0.4928 2.8921     NaN       NaN        NaN        NaN     NaN       NaN
+     A:A6L_newlow_pos_delta new coins 2022-25H1 14156 1271.0000  0.0002 0.0047 -0.0021 0.4792 4.0464     NaN       NaN        NaN        NaN     NaN       NaN
+    A:A6S_newhigh_neg_delta              pooled 23035 1298.0000 -0.0013 0.0044  0.0010 0.5112 3.7744     NaN       NaN        NaN        NaN     NaN       NaN
+    A:A6S_newhigh_neg_delta dev coins 2024-25H1  3515  529.0000 -0.0020 0.0018  0.0001 0.5013 1.0969     NaN       NaN        NaN        NaN     NaN       NaN
+    A:A6S_newhigh_neg_delta new coins 2022-25H1 19520 1298.0000 -0.0012 0.0047  0.0012 0.5130 3.9761     NaN       NaN        NaN        NaN     NaN       NaN
+                 C:pos_d:lo              pooled 46210       NaN     NaN    NaN     NaN    NaN    NaN  0.0022    4.7663 24313.0000    -0.0000  2.4442   -0.0008
+                 C:pos_d:lo dev coins 2024-25H1  6712       NaN     NaN    NaN     NaN    NaN    NaN  0.0026    2.4682  3370.0000     0.0008  1.5943   -0.0001
+                 C:pos_d:lo new coins 2022-25H1 39498       NaN     NaN    NaN     NaN    NaN    NaN  0.0021    5.0124 20943.0000    -0.0002  2.4781   -0.0009
+                C:pos_pd:lo              pooled 46093       NaN     NaN    NaN     NaN    NaN    NaN -0.0015    5.2382 23441.0000    -0.0012  3.4563   -0.0008
+                C:pos_pd:lo dev coins 2024-25H1  6683       NaN     NaN    NaN     NaN    NaN    NaN -0.0015    1.8928  3140.0000    -0.0006  0.7670   -0.0001
+                C:pos_pd:lo new coins 2022-25H1 39410       NaN     NaN    NaN     NaN    NaN    NaN -0.0015    5.2127 20301.0000    -0.0013  3.5106   -0.0009
+           C:below_pdval:hi              pooled 67548       NaN     NaN    NaN     NaN    NaN    NaN  0.0013    4.5240 18231.0000     0.0002  2.5563   -0.0008
+           C:below_pdval:hi dev coins 2024-25H1  9846       NaN     NaN    NaN     NaN    NaN    NaN  0.0030    2.0393  2426.0000     0.0022  0.8579   -0.0001
+           C:below_pdval:hi new coins 2022-25H1 57702       NaN     NaN    NaN     NaN    NaN    NaN  0.0011    4.5723 15805.0000    -0.0001  2.5540   -0.0009
+             C:swept_pdl:hi              pooled 67548       NaN     NaN    NaN     NaN    NaN    NaN  0.0022    2.6386 11915.0000     0.0010  0.5335   -0.0008
+             C:swept_pdl:hi dev coins 2024-25H1  9846       NaN     NaN    NaN     NaN    NaN    NaN  0.0031    0.8195  1610.0000     0.0025 -0.1385   -0.0001
+             C:swept_pdl:hi new coins 2022-25H1 57702       NaN     NaN    NaN     NaN    NaN    NaN  0.0021    2.6920 10305.0000     0.0008  0.5857   -0.0009
+                 C:cvd_d:lo              pooled 46336       NaN     NaN    NaN     NaN    NaN    NaN -0.0001    2.8349 28195.0000    -0.0011  0.9689   -0.0008
+                 C:cvd_d:lo dev coins 2024-25H1  6365       NaN     NaN    NaN     NaN    NaN    NaN  0.0010    1.8570  3654.0000     0.0008  1.6139   -0.0001
+                 C:cvd_d:lo new coins 2022-25H1 39971       NaN     NaN    NaN     NaN    NaN    NaN -0.0002    2.8402 24541.0000    -0.0013  0.9455   -0.0009
+                 C:mig_d:lo              pooled 44867       NaN     NaN    NaN     NaN    NaN    NaN -0.0006    3.1045 21907.0000    -0.0006  0.9082   -0.0008
+                 C:mig_d:lo dev coins 2024-25H1  6577       NaN     NaN    NaN     NaN    NaN    NaN  0.0016    1.9961  3030.0000     0.0013  0.9302   -0.0001
+                 C:mig_d:lo new coins 2022-25H1 38290       NaN     NaN    NaN     NaN    NaN    NaN -0.0009    2.9668 18877.0000    -0.0009  0.7568   -0.0009
+               C:x_PDVAL:lo              pooled 45486       NaN     NaN    NaN     NaN    NaN    NaN  0.0004    5.3961 22612.0000    -0.0001  2.6228   -0.0008
+               C:x_PDVAL:lo dev coins 2024-25H1  6643       NaN     NaN    NaN     NaN    NaN    NaN  0.0016    3.1185  3007.0000     0.0016  1.5848   -0.0001
+               C:x_PDVAL:lo new coins 2022-25H1 38843       NaN     NaN    NaN     NaN    NaN    NaN  0.0002    5.2698 19605.0000    -0.0004  2.6170   -0.0009
+                  C:oi24:lo              pooled 47424       NaN     NaN    NaN     NaN    NaN    NaN  0.0005    3.2931 24259.0000    -0.0002  1.4081   -0.0008
+                  C:oi24:lo dev coins 2024-25H1  6287       NaN     NaN    NaN     NaN    NaN    NaN  0.0006    2.7887  3071.0000     0.0003  1.6793   -0.0001
+                  C:oi24:lo new coins 2022-25H1 41137       NaN     NaN    NaN     NaN    NaN    NaN  0.0005    3.2557 21188.0000    -0.0003  1.4146   -0.0009
+                 C:ret24:lo              pooled 50309       NaN     NaN    NaN     NaN    NaN    NaN -0.0004    4.5844 25241.0000    -0.0004  2.4708   -0.0008
+                 C:ret24:lo dev coins 2024-25H1  6899       NaN     NaN    NaN     NaN    NaN    NaN -0.0018    2.0213  3300.0000    -0.0006  0.9490   -0.0001
+                 C:ret24:lo new coins 2022-25H1 43410       NaN     NaN    NaN     NaN    NaN    NaN -0.0002    4.5619 21941.0000    -0.0004  2.5226   -0.0009
