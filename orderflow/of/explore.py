@@ -42,8 +42,11 @@ def diff_day_t(a: pd.Series, ta: pd.Series, b: pd.Series, tb: pd.Series) -> floa
 
 
 def summarize(E: pd.DataFrame, col: str = "net") -> dict:
+    """mean = per-trade mean (fixed notional per trade); dmean = mean of per-day means (fixed capital per
+    day split across that day's trades); t = day-clustered t of the per-day means."""
     t, nd = day_t(E[col], E.t)
-    return dict(n=len(E), days=nd, mean=E[col].mean(), med=E[col].median(), win=(E[col] > 0).mean(), t=t)
+    dm = E[col].groupby(E.t.dt.floor("D")).mean().mean() if len(E) else np.nan
+    return dict(n=len(E), days=nd, mean=E[col].mean(), dmean=dm, med=E[col].median(), win=(E[col] > 0).mean(), t=t)
 
 
 def log(rows: list[dict]):
@@ -90,6 +93,9 @@ def events(X: pd.DataFrame) -> dict[str, tuple[pd.Series, int, str | None]]:
         "A7S_dPOC_below_PDVAL_12": ((hr == 11) & (X.dPOC < X.PDVAL), -1, None),
         "A8L_week80_from_below": (_first_per((X.wO < X.PWVAL) & inPW(c) & inPW(c1) & same_w, wkey), 1, "PWVAH"),
         "A8S_week80_from_above": (_first_per((X.wO > X.PWVAH) & inPW(c) & inPW(c1) & same_w, wkey), -1, "PWVAL"),
+        # added in discovery round 2 (post-hoc): A3 with the side reversed = fade acceptance outside PD range
+        "A9L_fade_accept_below_PDL": (_first_per((c < X.PDL) & (c1 < X.PDL) & same_d, dkey), 1, "PDL"),
+        "A9S_fade_accept_above_PDH": (_first_per((c > X.PDH) & (c1 > X.PDH) & same_d, dkey), -1, "PDH"),
     }
     return E
 
@@ -145,7 +151,7 @@ def screen_features(X: pd.DataFrame) -> pd.DataFrame:
     F["ret24"] = X.ret24
     F["ret4"] = X.ret4
     F["oi24"] = X.oi24
-    F["fund"] = X.fund_last
+    F["fund_rate"] = X.fund_last
     F["swept_pdl"] = (X.low6 < X.PDL).astype(float)
     F["swept_pwl"] = (X.low6 < X.PWL).astype(float)
     F["above_pdl"] = (X.c > X.PDL).astype(float)

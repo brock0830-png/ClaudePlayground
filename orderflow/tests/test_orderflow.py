@@ -164,3 +164,53 @@ def test_x1_fills_at_first_touch_else_24h():
     row["POC0"] = 99.0
     r = va_features.exit_x1(row, m1, f)
     assert r["x1_hit"] == 1 and r["x1_net"] == pytest.approx(-COST_RT)
+
+
+# ---------- exploration events ----------
+
+def _frame(n=72):
+    from of import explore  # noqa: F401
+    idx = pd.date_range("2023-03-06", periods=n, freq="1h", tz="UTC")      # a Monday
+    X = pd.DataFrame(index=idx)
+    X["c"] = 100.0; X["o"] = 100.0; X["h"] = 100.5; X["l"] = 99.5; X["delta"] = 0.0
+    for k, v in dict(PDL=98.0, PDH=102.0, PDVAL=99.0, PDVAH=101.0, PWL=95.0, PWH=105.0, PWVAL=97.0, PWVAH=103.0,
+                     dO=100.0, wO=100.0, dPOC=100.0).items():
+        X[k] = v
+    X["dL"] = X.l.groupby(idx.floor("D")).cummin(); X["dH"] = X.h.groupby(idx.floor("D")).cummax()
+    X["wL"] = X.l.cummin(); X["wH"] = X.h.cummax()
+    X["dVAH"] = 100.4; X["dVAL"] = 99.6
+    for hd in (24,):
+        X[f"L{hd}"] = 0.01; X[f"S{hd}"] = -0.01; X[f"fund{hd}"] = 0.0
+    return X
+
+
+def test_A1L_fires_once_on_first_reclaim_of_prior_day_low():
+    from of import explore
+    X = _frame()
+    X.loc[X.index[5], "l"] = 97.0; X.loc[X.index[5], "c"] = 97.5          # trades and closes below PDL
+    X.loc[X.index[6], "c"] = 98.5                                          # closes back above
+    X.loc[X.index[8], "l"] = 97.2                                          # second dip same day: no new signal
+    X["dL"] = X.l.groupby(X.index.floor("D")).cummin()
+    trig, side, _ = explore.events(X)["A1L_fail_below_PDL"]
+    fired = X.index[trig.values]
+    assert side == 1 and list(fired) == [X.index[6]]
+
+
+def test_A3S_needs_two_closes_below_in_same_day():
+    from of import explore
+    X = _frame()
+    X.loc[X.index[23], "c"] = 97.0                     # last bar of day 1
+    X.loc[X.index[24], "c"] = 97.0                     # first bar of day 2: different day -> no
+    X.loc[X.index[30:32], "c"] = 97.0                  # two consecutive in day 2 -> fires at bar 31
+    trig, side, _ = explore.events(X)["A3S_accept_below_PDL"]
+    assert side == -1 and list(X.index[trig.values]) == [X.index[31]]
+
+
+def test_tp_exit_hits_target_or_falls_back():
+    from of import explore
+    X = _frame()
+    X.loc[X.index[10], "h"] = 101.2
+    r = explore._tp_exit(X, 3, 1, 101.0, 24)
+    assert r == pytest.approx(0.01 - COST_RT)
+    assert explore._tp_exit(X, 3, 1, 150.0, 24) == pytest.approx(0.01)       # falls back to the 24h net
+    assert explore._tp_exit(X, 3, 1, 99.0, 24) == pytest.approx(-COST_RT)     # target already through
