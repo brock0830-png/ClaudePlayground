@@ -4,7 +4,7 @@ Protocol: `crypto/perp/PREREG_PERP.md` (commit `c4ba92a`, before any backtest). 
 
 ## Verdict
 
-**Nothing passed.** None of the 28 directional families built on open interest, funding/premium or OBV passed the design stage (Jun 2024 to Sep 2025), and neither did funding carry. The best near-misses also lost money on the holdout (Oct 2025 to Sep 2026). None of this can responsibly fund the trend basket.
+**Nothing passed.** None of the 28 directional families built on open interest, funding/premium or OBV passed the design stage (Jun 2024 to Sep 2025), and neither did funding carry (carry here used a funding reconstruction later found to be biased low; see the correction below and Phase 3). The best near-misses also lost money on the holdout (Oct 2025 to Sep 2026). None of this can responsibly fund the trend basket.
 
 ## Design results (reference cell of each hypothesis; bp per trade, after costs and funding)
 
@@ -18,8 +18,8 @@ Protocol: `crypto/perp/PREREG_PERP.md` (commit `c4ba92a`, before any backtest). 
 | P3 same, OI filter off (ablation) | 29.3 | +42 | +25 | -2.1 | 50% | +18 | the OI filter adds nothing |
 | P3 OI-confirmed breakout, short | 15.8 | +27 | +10 | -3.1 | 50% | +12 | not significant |
 | P4 OBV divergence, long / short | 13-17 | -32 / -50 | -45 / -63 | 0.6 / -0.7 | 50% | <0 | loses |
-| P5 funding carry, θ 0.01% | 2.0 entries | | 0.15%/yr on capital, Sharpe 0.52 | | | | funding was too low in 2024-25 to pay four legs of fees |
-| P5 funding carry, θ 0.02% (best cell) | 0.3 entries | | 0.93%/yr, Sharpe 5.2, max DD -0.1% | | | | steady but tiny, below the 3%/yr bar |
+| P5 funding carry, θ 0.01% | 2.0 entries | | 0.15%/yr on capital, Sharpe 0.52 | | | | computed on reconstructed funding, which was biased low; superseded by Phase 3 P5R on real prints |
+| P5 funding carry, θ 0.02% (best cell) | 0.3 entries | | 0.93%/yr, Sharpe 5.2, max DD -0.1% | | | | reconstructed funding (biased low); superseded by Phase 3 P5R |
 
 All 28 families and every horizon are in `reports/design_events.csv`.
 
@@ -33,12 +33,12 @@ All 28 families and every horizon are in `reports/design_events.csv`.
 | P1 same, 1h, 9 coins | 13.0 | -19 bp | -0.4 | 45% |
 | P3 OI breakout long (N 60), 4h | 10.4 | +5 bp | -1.1 | 45% |
 | P3 same, 1h | 15.4 | -11 bp | -1.8 | 41% |
-| P5 carry θ 0.02% | 8 entries in the year | 0.06%/yr, Sharpe 0.82 | | |
+| P5 carry θ 0.02% (reconstructed funding; superseded) | 8 entries in the year | 0.06%/yr, Sharpe 0.82 | | |
 
 ## What was not tested, and why
 
 - **Aggressive vs passive flow (taker buy/sell), CVD, footprint.** These need Binance taker volume or tick trades from `data.binance.vision`, which this environment's network policy blocks. With that host allowed, they can be tested the same way. Temper expectations, though: order-flow edges in the literature live at seconds-to-minutes horizons and usually need maker (passive) execution. After taker fees, they are the hardest place for a retail bot to win.
-- **Actual funding prints.** Funding is rebuilt from the premium index with Binance's formula. It has not been checked against real prints, for the same network reason. A bias in either direction would not change the verdict: carry was below the bar with any plausible bias, and funding moves directional P&L by only a few bp per trade.
+- **Actual funding prints. Correction, made in Phase 3.** Real Binance prints later became available (`crypto/data/bv/*_funding.parquet`). They show the reconstruction from TradingView premium bars was biased **low**: over 2024-06 to 2026-08, real funding averaged 0.4 to 10 points a year higher, depending on the coin (ETH 5.0% real vs 1.9% reconstructed; LINK 6.0% vs 0.9%), with correlation only 0.49 to 0.85. The earlier statement that a bias would not change the verdict was not checked, and it was optimistic. The P5 carry rows above (design and holdout) are superseded by Phase 3's P5R test on real prints (`crypto/flow/REPORT_FLOW.md`). The directional results are unaffected in practice: the bias is under 1 bp per trade.
 
 ## Honest bottom line for the brief
 

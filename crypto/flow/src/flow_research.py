@@ -305,6 +305,40 @@ def run_design(fams=None, do_carry=True):
     return evt, car
 
 
+def run_holdout(passing: list[str], info_only: list[str]):
+    """Run once after the freeze. passing: family names that passed design (eligible). info_only: near-misses declared
+    at the freeze, reported but never eligible. Carry is run if it passed or is listed in info_only as 'P5R'."""
+    once = OUT / "HOLDOUT_RAN_ONCE"
+    if not UNLOCK.exists() or once.exists():
+        sys.exit("locked or already ran")
+    rows = []
+    for name in passing + info_only:
+        if name == "P5R":
+            continue
+        fam, pj, side = name.split("|")
+        p = json.loads(pj)
+        plist, Hs, (ref_p, ref_H), coins = GRIDS[fam]
+        s_, _ = eval_event(fam, p, side, ref_H, HOLDOUT, coins)
+        tag = "eligible" if name in passing else "information only; failed design"
+        row("holdout", fam, name, f"H={ref_H}", p, HOLDOUT, 0, 1.0, s_, note=tag)
+        ok = s_.get("n", 0) > 0 and s_["mean_net"] > 0 and (s_.get("t_clust") or 0) >= 1.0 and (s_.get("breadth") or 0) >= 0.5
+        rows.append({"family": name, "status": tag, "H": ref_H, **{k: s_.get(k) for k in ("n", "per_week", "mean_gross",
+                     "mean_net", "t_clust", "excess", "win_rate", "breadth")}, "HOLDOUT_PASS": ok if name in passing else None})
+    if "P5R" in passing + info_only:
+        car = pd.read_csv(OUT / "design_carry.csv")
+        th = float(car.loc[car.is_ref, "theta"].iloc[0]) if "P5R" in passing else float(car.sort_values("sharpe").theta.iloc[-1])
+        r, n = carry(th, HOLDOUT)
+        m = carry_metrics(r, n)
+        tag = "eligible" if "P5R" in passing else "information only; failed design"
+        row("holdout", "P5R", "P5R", f"theta={th}", {"theta": th}, HOLDOUT, 0, 1.0, m, note=tag)
+        rows.append({"family": f"P5R theta={th}", "status": tag, **m,
+                     "HOLDOUT_PASS": (m["cagr"] > 0 and m["sharpe"] >= 1) if "P5R" in passing else None})
+    out = pd.DataFrame(rows)
+    out.to_csv(OUT / "holdout.csv", index=False)
+    once.write_text("ran once\n")
+    return out
+
+
 if __name__ == "__main__":
     pd.set_option("display.width", 250)
     pd.set_option("display.max_rows", 200)
@@ -318,3 +352,6 @@ if __name__ == "__main__":
                    "cost2_net_bp", "PASS"]].round(2).to_string())
         if car is not None:
             print(car.round(4).to_string())
+    elif sys.argv[1] == "holdout":
+        cfg = json.loads((FLOW / "FREEZE.json").read_text())
+        print(run_holdout(cfg["passing"], cfg["info_only"]).round(4).to_string())
