@@ -24,7 +24,7 @@ The client's brief: find a positive-EV signal that can be traded repeatedly by s
 
 A trade opens on a signal bar only if no trade from the same family is already open on that symbol (no pyramiding). Metrics, pooled across symbols in a dataset group: trade count; mean gross and net return per trade; median; win rate; profit factor; t-statistic of the mean net return, clustered by entry calendar day (trades starting on the same UTC day are averaged into one observation first); and **excess**, meaning mean gross trade return minus the unconditional mean H-bar return of the same symbols over the same window, averaged over trades. Excess separates signal from market drift.
 
-Dataset groups: **G30** = the client's SOLBTC and AVAXBTC 30m; **G4h** = the 15 4h symbols; **GD** = the 28 daily coins (used only by H2 and H4). The confirmation-only sets **C1h** (9 symbols, 1h) and **C15** (ETHBTC 15m) are used at the holdout stage only.
+Dataset groups: **G30** = the client's SOLBTC and AVAXBTC 30m; **G4h** = the 15 4h symbols; **GD** = the 28 daily coins (used by the H2 and H3 event tests; H4 and H5 are the daily portfolio tests in section 2). The confirmation-only sets **C1h** (9 symbols, 1h) and **C15** (ETHBTC 15m) are used at the holdout stage only.
 
 ### H1. TD Sequential + Z-score confluence (the client's TDZ indicator)
 
