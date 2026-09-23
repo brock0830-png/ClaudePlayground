@@ -1,0 +1,4 @@
+family,status,H,n,per_week,mean_gross,mean_net,t_clust,excess,win_rate,breadth,HOLDOUT_PASS,cagr,vol,sharpe,maxdd
+"F5|{""s"": 2.5}|long",information only; failed design,12.0,2855,31.772655007949123,0.0007842040415825098,-0.000762860679958646,-3.702769858027196,0.0009214913448179817,0.46760070052539404,0.375,,,,,
+"F6|{""g"": 2.5}|long",information only; failed design,12.0,1176,13.087440381558029,0.0007768273352896399,-0.0007441369419212444,-2.318446952107562,0.0008857692246521332,0.4549319727891156,0.375,,,,,
+P5R theta=0.02,information only; failed design,,0,0.0,,,,,,,,0.0,0.0,,0.0

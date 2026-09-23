@@ -10,6 +10,8 @@ Protocol: `crypto/PREREG.md`, committed before any backtest (`11c5c61`, amendmen
 - **Deployed:** `crypto/bot/` trades exactly this rule. Replayed through all 996 holdout days, it reproduces the backtest to machine precision. It runs in paper mode by default, and live trading needs a double opt-in.
 
 > **Phase 2 (perp data: open interest, funding, OBV): see `crypto/perp/REPORT_PERP.md`.** None of 28 pre-registered perp signal families passed, and neither did funding carry. The best near-misses lost money on the holdout. The trend basket is still the only rule that passed.
+>
+> **Phase 3 (Binance archive: taker/aggressive flow, CVD, top-trader vs retail positioning, order-book depth, tick footprints, real funding): see `crypto/flow/REPORT_FLOW.md`.** None of 32 families passed. Carry on real funding earned 2.3%/yr in 2022-2024 but lost money in 2025-2026, when funding halved. The trend basket remains the only rule with a clean pass.
 
 ## 2. What was tested
 
