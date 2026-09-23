@@ -75,9 +75,7 @@ def profile_from_bars(l: np.ndarray, h: np.ndarray, v: np.ndarray, nrows: int = 
     cnt = rb - ra + 1
     per = np.where(cnt > 0, v / cnt, 0.0)
     # difference-array trick: add per[i] to rows ra[i]..rb[i]
-    diff = np.zeros(nrows + 1)
-    np.add.at(diff, ra, per)
-    np.add.at(diff, rb + 1, -per)
+    diff = np.bincount(ra, weights=per, minlength=nrows + 1) - np.bincount(rb + 1, weights=per, minlength=nrows + 1)
     hist = np.cumsum(diff[:-1])
     return value_area(hist, lo, hi)
 
