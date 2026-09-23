@@ -303,6 +303,38 @@ def run_design():
     return evt, car
 
 
+INFO_ONLY = [("P1", {"k": 2, "m": 1.5}, "long", 3), ("P3", {"N": 60, "filter": True}, "long", 6)]
+
+
+def run_holdout_info():
+    """Declared at the Phase 2 freeze: nothing passed the design stage, so no family is eligible. These near-misses
+    and the best carry cell are run once on the holdout for information only; no result can make them deployable."""
+    once = OUT / "HOLDOUT_RAN_ONCE"
+    if not UNLOCK.exists() or once.exists():
+        sys.exit("locked or already ran")
+    rows = []
+    for hyp, p, side, H in INFO_ONLY:
+        fam = f"{hyp}|{json.dumps(p, sort_keys=True)}|{side}"
+        for label, coins, iv in (("4h U16", U16, "4h"), ("1h C9", C9, "1h")):
+            Hh = H if iv == "4h" else H * 4  # same clock time on 1h bars
+            s_, _ = eval_event(hyp, p, side, Hh, HOLDOUT, coins=coins, iv=iv)
+            ledger({"phase": "holdout-info", "hypothesis": hyp, "family": fam, "cell": f"H={Hh} {label}", "params": json.dumps(p),
+                    "window_start": str(HOLDOUT[0].date()), "window_end": str(HOLDOUT[1].date()), "delay": 0, "cost_mult": 1.0,
+                    **s_, "note": "information only; failed design"})
+            rows.append({"family": fam, "set": label, "H": Hh, **{k: s_.get(k) for k in ("n", "per_week", "mean_gross", "mean_net",
+                         "t_clust", "excess", "win_rate", "breadth")}})
+    r, n = carry(0.02, HOLDOUT)
+    m = carry_metrics(r, n)
+    ledger({"phase": "holdout-info", "hypothesis": "P5", "family": "P5", "cell": "theta=0.02", "params": json.dumps({"theta": 0.02}),
+            "window_start": str(HOLDOUT[0].date()), "window_end": str(HOLDOUT[1].date()), "delay": 0, "cost_mult": 1.0, **m,
+            "note": "information only; failed design"})
+    rows.append({"family": "P5 carry theta=0.02", "set": "4h U16", **m})
+    out = pd.DataFrame(rows)
+    out.to_csv(OUT / "holdout_info.csv", index=False)
+    once.write_text("ran once\n")
+    return out
+
+
 if __name__ == "__main__":
     pd.set_option("display.width", 250)
     pd.set_option("display.max_rows", 200)
@@ -311,3 +343,5 @@ if __name__ == "__main__":
         print(evt[["family", "n", "per_week", "gross_bp", "net_bp", "t", "excess_bp", "breadth", "delay_net_bp",
                    "cost2_net_bp", "PASS"]].round(2).to_string())
         print(car.round(4).to_string())
+    if sys.argv[1:] == ["holdout"]:
+        print(run_holdout_info().round(4).to_string())
