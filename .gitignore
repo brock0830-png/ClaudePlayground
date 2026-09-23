@@ -7,3 +7,4 @@ data/cache/
 *.bin
 crypto/data/cache/
 crypto/bot/state/*.lock
+crypto/data/bv/*_15m.parquet
