@@ -77,8 +77,8 @@ def main():
     r_sel = pd.read_parquet(OUT / "ret_H4_selected.parquet")["ret"].dropna()
     md, rd, _ = R.run_portfolio("SMA", sel, cdata.DAILY_DESIGN)
     verdict["deflated_sharpe_design"] = pf.deflated_sharpe(md["sharpe"], n_trials, md["days"], md["skew"], md["kurt"], sr_std)
-    verdict["deflated_sharpe_holdout"] = pf.deflated_sharpe(selm.sharpe, n_trials, int(selm.days), float(selm.skew),
-                                                            float(selm.kurt), sr_std)
+    verdict["deflated_sharpe_holdout"] = pf.deflated_sharpe(selm["sharpe"], n_trials, int(selm["days"]), float(selm["skew"]),
+                                                            float(selm["kurt"]), sr_std)
     verdict["n_trials"] = n_trials
     verdict["sr_std_trials"] = sr_std
     rep["portfolio"] = {"table": tab.to_dict(orient="records"), "verdict": verdict}
