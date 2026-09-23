@@ -1,0 +1,1 @@
+unlocked at the crypto freeze commit for the single holdout run (crypto/src/holdout.py). Frozen finalist: H4 SMA50 with BTC gate (SMA100). Information-only holdout rows declared in holdout.py docstring.

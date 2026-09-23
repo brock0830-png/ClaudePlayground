@@ -102,3 +102,13 @@ def test_holdout_lock():
         pytest.skip("holdout already unlocked")
     with pytest.raises(RuntimeError):
         cdata.check_lock(cdata.DAILY_HOLDOUT[1], "1D")
+
+
+def test_clustered_t_survives_object_dtype():
+    df = _bars(200)
+    sig = pd.Series(False, df.index)
+    sig.iloc[[10, 40, 70, 100, 130]] = True
+    tr = events.trades(df, sig, 4, "long", (df.index[0], df.index[-1]), 0.0, sym="A")
+    empty = events.trades(df, pd.Series(False, df.index), 4, "long", (df.index[0], df.index[-1]), 0.0, sym="B")
+    mixed = pd.concat([tr, empty], ignore_index=True)
+    assert np.isfinite(events.clustered_t(mixed))

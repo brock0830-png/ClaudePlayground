@@ -1,0 +1,126 @@
+                       family    n  mean_net_bp         t   excess_bp   breadth  delay_net_bp  cost2_net_bp     E1     E2     E3     E4     E5     E6     E7   PASS  promising
+0              H1|V1|long|G30  102   -23.523549 -1.327728    7.011343  0.000000    -25.547843    -53.523549  False  False   True  False  False  False   True  False      False
+1              H1|V1|long|G4h  216   -56.143321 -1.031837  -47.576773  0.375000     -0.648314    -84.004432  False  False  False  False  False  False   True  False      False
+2             H1|V1|short|G30  119   -32.047206 -1.496210   -2.578152  0.000000    -26.498901    -62.047206  False  False  False  False  False  False   True  False      False
+3             H1|V1|short|G4h  223  -117.814521 -1.885879  -74.721868  0.062500   -160.834843   -137.321247  False  False  False  False  False  False   True  False      False
+4              H1|V2|long|G30  227   -26.963851 -2.806774    3.556924  0.000000    -29.444441    -56.963851  False  False   True  False  False  False   True  False      False
+5              H1|V2|long|G4h  418   -55.428449 -0.783923  -45.001819  0.250000    -17.739839    -83.481081  False  False  False  False  False  False   True  False      False
+6             H1|V2|short|G30  219   -33.555808 -2.151115   -4.120596  0.000000    -34.359090    -63.555808  False  False  False  False  False  False   True  False      False
+7             H1|V2|short|G4h  435   -78.610649 -2.085963  -35.916187  0.187500    -90.281372    -98.201454  False  False  False  False  False  False   True  False      False
+8              H1|V3|long|G30  349   -29.774329 -3.474632    0.756210  0.000000    -34.247777    -59.774329  False  False   True  False  False  False   True  False      False
+9              H1|V3|long|G4h  593   -66.664457 -1.460691  -55.428979  0.187500    -42.452433    -94.799364  False  False  False  False  False  False   True  False      False
+10            H1|V3|short|G30  311   -31.839098 -2.171324   -2.358356  0.000000    -34.741228    -61.839098  False  False  False  False  False  False   True  False      False
+11            H1|V3|short|G4h  656   -59.038481 -1.242526  -16.551566  0.187500    -61.934891    -78.507993  False  False  False  False  False  False   True  False      False
+12             H1|V4|long|G30  288   -30.844744 -1.824263   -0.330283  0.000000    -31.781251    -60.844744  False  False  False  False  False  False   True  False      False
+13             H1|V4|long|G4h  504   -44.740317 -0.940362  -36.792186  0.250000    -49.023567    -72.510158  False  False  False  False  False  False   True  False      False
+14            H1|V4|short|G30  335   -29.175667 -2.500386    0.290348  0.000000    -24.436811    -59.175667  False  False   True  False  False  False   True  False      False
+15            H1|V4|short|G4h  597  -110.681744 -1.269152  -68.225688  0.125000    -86.710937   -130.222783  False  False  False  False  False  False   True  False      False
+16             H1|V5|long|G30   25   -29.471692 -1.109617    0.936123  0.000000    -26.613433    -59.471692  False  False   True  False  False  False  False  False      False
+17             H1|V5|long|G4h   32   109.175553 -0.113514  116.161129  1.000000    159.295687     80.863053  False   True   True   True   True   True   True  False       True
+18            H1|V5|short|G30   21   -31.463435 -1.075418   -1.844414  0.000000     -3.756892    -61.463435  False  False  False  False  False  False  False  False      False
+19            H1|V5|short|G4h   35  -325.837091 -2.868951 -281.044294       NaN   -196.833134   -345.551376  False  False  False   True  False  False   True  False      False
+20             H1|V6|long|G30   32    -4.080089  0.812853   26.688756  0.500000      9.738181    -34.080089  False  False   True  False   True  False   True  False      False
+21             H1|V6|long|G4h  296    23.219457  1.277282   36.029356  0.500000     43.192432     -5.057570  False   True   True  False   True  False   True  False      False
+22            H1|V6|short|G30   45     1.493176  0.187682   30.866199  0.500000     -6.185698    -28.506824  False  False   True  False  False  False   True  False      False
+23            H1|V6|short|G4h  337  -113.853533 -1.183404  -71.260309  0.250000   -117.087297   -133.242257  False  False  False  False  False  False   True  False      False
+24          H2|os=15|long|G30  349   -35.797817 -1.836171   -5.275353  0.000000    -31.315256    -65.797817  False  False  False  False  False  False   True  False      False
+25          H2|os=15|long|G4h  564     9.985369 -0.579980   20.736573  0.500000     -2.978321    -18.014631  False   True   True  False  False  False   True  False      False
+26           H2|os=15|long|GD  703   -42.187590 -0.150306 -164.790502  0.464286    -44.550827    -72.099396  False  False  False  False  False  False   True  False      False
+27          H2|os=20|long|G30  506   -35.499989 -1.889006   -4.967990  0.000000    -33.370659    -65.499989  False  False  False  False  False  False   True  False      False
+28          H2|os=20|long|G4h  809    -5.193479 -0.517496    5.486159  0.437500    -19.642877    -33.203368  False  False   True  False  False  False   True  False      False
+29           H2|os=20|long|GD  992   -92.263942 -0.607414 -216.359628  0.250000    -92.784631   -122.126846  False  False  False  False  False  False   True  False      False
+30  H3|k=2.5|clv=off|long|G30  234   -23.461949 -1.613252    6.899719  0.000000    -31.434113    -53.461949  False  False   True  False  False  False   True  False      False
+31  H3|k=2.5|clv=off|long|G4h  498    46.750881  1.262831   59.137153  0.687500     15.367294     19.088231  False   True   True   True  False   True   True  False      False
+32   H3|k=2.5|clv=off|long|GD  364    -2.404384 -0.933509  -80.678789  0.500000    -70.947390    -32.107681  False  False  False  False  False  False   True  False      False
+33   H3|k=2.5|clv=on|long|G30    2  -166.338586       NaN -136.466673       NaN    -33.449006   -196.338586  False  False  False  False  False  False  False  False      False
+34   H3|k=2.5|clv=on|long|G4h   14   327.150932  1.391495  335.605159       NaN     40.903221    299.436646  False   True   True   True  False   True  False  False      False
+35    H3|k=2.5|clv=on|long|GD   25  -296.381618 -0.503340 -366.751693       NaN    195.184801   -326.781618  False   True  False   True   True  False  False  False      False
+36  H3|k=3.0|clv=off|long|G30  133   -26.892006 -1.336019    3.422823  0.000000    -39.793248    -56.892006  False  False   True  False  False  False   True  False      False
+37  H3|k=3.0|clv=off|long|G4h  335   127.900747  1.774313  139.773882  0.812500     61.104489    100.342538  False   True   True   True  False   True   True  False      False
+38   H3|k=3.0|clv=off|long|GD  255  -100.884589 -1.827108 -177.597676  0.333333   -219.497863   -130.594392  False  False  False  False  False  False   True  False      False
+39   H3|k=3.0|clv=on|long|G30    1  -294.651489       NaN -264.779576       NaN      2.270811   -324.651489  False  False  False  False   True  False  False  False      False
+40   H3|k=3.0|clv=on|long|G4h   10   628.296885  1.060880  632.544639       NaN     15.254445    600.296885  False   True   True   True  False   True  False  False      False
+41    H3|k=3.0|clv=on|long|GD   14  -201.927473 -1.284190 -273.861119       NaN    104.480558   -233.070330  False   True  False   True   True  False  False  False      False
+   hyp                   cell      cagr       vol    sharpe   sortino     maxdd       mar  exposure  turnover_ann  trades_per_year     P1
+0   H4      SMA20 btcgate=off  0.572374  0.497205  1.159790  1.726352 -0.513455  1.114750  0.470805     38.634029       964.726152   True
+1   H4      SMA50 btcgate=off  0.592694  0.515778  1.161955  1.720323 -0.527821  1.122907  0.450746     21.175813       584.566408   True
+2   H4     SMA100 btcgate=off  0.381339  0.518140  0.888234  1.261951 -0.697649  0.546605  0.420739     14.914311       454.292560  False
+3   H4     SMA200 btcgate=off  0.191432  0.526735  0.601973  0.838712 -0.729402  0.262451  0.403164     11.815044       375.661798  False
+4   H4       SMA20 btcgate=on  0.532293  0.429845  1.208566  1.807747 -0.379944  1.400977  0.329360     26.776460       659.198996   True
+5   H4       SMA50 btcgate=on  0.708230  0.471399  1.370954  2.107578 -0.395307  1.791595  0.359131     15.877890       449.628024   True
+6   H4      SMA100 btcgate=on  0.519972  0.478887  1.113959  1.654112 -0.480976  1.081078  0.361792     13.072750       404.148791   True
+7   H4      SMA200 btcgate=on  0.375589  0.460593  0.922835  1.349406 -0.484388  0.775389  0.338195     11.594061       362.501141   True
+8   H4      DON20 btcgate=off  0.480570  0.422528  1.140670  1.698798 -0.456008  1.053864  0.344876     15.476735       426.305340   True
+9   H4      DON50 btcgate=off  0.416788  0.447378  1.008016  1.408346 -0.489269  0.851857  0.340685      6.104461       232.227293   True
+10  H4     DON100 btcgate=off  0.284571  0.443112  0.790742  1.125815 -0.615456  0.462375  0.283694      3.368390       157.094934   True
+11  H4       DON20 btcgate=on  0.487812  0.379890  1.236206  1.864644 -0.258466  1.887332  0.258406     12.889858       340.344592   True
+12  H4       DON50 btcgate=on  0.511352  0.412688  1.209162  1.758665 -0.404537  1.264042  0.296577      6.374322       233.893199   True
+13  H4      DON100 btcgate=on  0.399059  0.403944  1.032797  1.539235 -0.422070  0.945481  0.249438      4.589454       187.914194   True
+14  H5  XSM L=14 k=3 gate=off  0.100633  0.959278  0.581073  0.856109 -0.946024  0.106375  0.956107     52.950677       227.562757  False
+15  H5  XSM L=28 k=3 gate=off  0.256031  0.974248  0.726997  1.077551 -0.832787  0.307438  0.956107     39.966742       207.238704  False
+16  H5  XSM L=56 k=3 gate=off  0.207052  1.111290  0.673772  1.100797 -0.931427  0.222295  0.956107     28.220379       189.080329  False
+17  H5  XSM L=14 k=5 gate=off  0.254119  0.893030  0.708456  1.013957 -0.913453  0.278197  0.942258     45.019497       355.171155  False
+18  H5  XSM L=28 k=5 gate=off  0.334728  0.968487  0.770733  1.170220 -0.863880  0.387471  0.942258     33.919310       326.017800  False
+19  H5  XSM L=56 k=5 gate=off  0.438074  0.972186  0.850384  1.290152 -0.851305  0.514591  0.942258     24.255709       300.529439  False
+20  H5   XSM L=14 k=3 gate=on  0.322446  0.855595  0.750340  1.145015 -0.929819  0.346783  0.745456     44.961166       182.916476  False
+21  H5   XSM L=28 k=3 gate=on  0.477023  0.868202  0.878806  1.359048 -0.753312  0.633234  0.735267     33.550319       163.591967  False
+22  H5   XSM L=56 k=3 gate=on  0.283681  1.035963  0.703534  1.183506 -0.920995  0.308016  0.728052     24.186411       147.932451  False
+23  H5   XSM L=14 k=5 gate=on  0.530474  0.761599  0.940573  1.404726 -0.883923  0.600136  0.687294     38.579320       273.541762  False
+24  H5   XSM L=28 k=5 gate=on  0.581200  0.849535  0.942504  1.507812 -0.785597  0.739820  0.677294     28.738493       245.054770  False
+25  H5   XSM L=56 k=5 gate=on  0.502938  0.863277  0.892083  1.383754 -0.853944  0.588959  0.666947     20.172255       220.232770  False
+26  BM                    BM1  0.140504  0.841409  0.589732  0.811586 -0.839630  0.167340  0.970790      2.368061       304.527613    NaN
+27  BM                    BM2  0.242795  0.672616  0.665755  0.959005 -0.766293  0.316844  0.970790      0.166391         0.499772    NaN
+28  BM                    BM3  0.502124  0.454914  1.120512  1.751872 -0.385912  1.301137  0.494751     11.487747        11.494751    NaN
+{
+  "H4": {
+    "hyp": "H4",
+    "median_sharpe": 1.1273145188457923,
+    "bm1_sharpe": 0.5897321539806619,
+    "bm1_maxdd": -0.8396302440023176,
+    "P2": true,
+    "n_cells_P1": 12,
+    "n_cells": 14,
+    "selected": "SMA50 btcgate=on",
+    "sel_sharpe": 1.3709540406633731,
+    "sel_maxdd": -0.3953070431442449,
+    "sel_cagr": 0.708229960835582,
+    "P1": true,
+    "P3": true,
+    "delay_sharpe": 1.504566362277723,
+    "P4": true,
+    "sub": {
+      "2018-2018": [
+        1.632,
+        0.989
+      ],
+      "2019-2020": [
+        1.356,
+        0.35
+      ],
+      "2021-2021": [
+        0.815,
+        0.112
+      ],
+      "2022-2023": [
+        1.615,
+        0.858
+      ]
+    },
+    "P5": true,
+    "cost2_sharpe": 1.3222661138603151,
+    "cost2_maxdd": -0.42529480192908853,
+    "PASS": true
+  },
+  "H5": {
+    "hyp": "H5",
+    "median_sharpe": 0.7605366631856105,
+    "bm1_sharpe": 0.5897321539806619,
+    "bm1_maxdd": -0.8396302440023176,
+    "P2": true,
+    "n_cells_P1": 0,
+    "n_cells": 12,
+    "selected": null,
+    "P1": false,
+    "PASS": false
+  }
+}

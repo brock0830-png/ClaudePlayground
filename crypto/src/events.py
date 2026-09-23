@@ -79,7 +79,9 @@ def unconditional(df: pd.DataFrame, H: int, side: str, window, delay: int = 0) -
 def clustered_t(tr: pd.DataFrame, col: str = "net") -> float:
     if len(tr) < 3:
         return np.nan
-    g = tr.groupby(tr["entry_time"].dt.floor("D"))[col].mean()
+    # concat with an empty per-symbol frame leaves object dtype, so normalise before grouping by day
+    day = pd.to_datetime(tr["entry_time"], utc=True).dt.floor("D")
+    g = tr.groupby(day)[col].mean()
     if len(g) < 3 or g.std(ddof=1) == 0:
         return np.nan
     return float(g.mean() / (g.std(ddof=1) / np.sqrt(len(g))))

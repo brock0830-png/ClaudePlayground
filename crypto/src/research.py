@@ -87,7 +87,8 @@ def eval_event(hyp, variant, side, grp, H, window, delay=0, cost_mult=1.0, fee_b
         h_u = H if H != "zexit" else (int(round(tr.bars.mean())) if len(tr) else 8)
         unc[sym], unc_adv[sym] = events.unconditional(df, h_u, side, window, delay)
         trs.append(tr)
-    tr = pd.concat(trs, ignore_index=True)
+    trs = [t for t in trs if len(t)]
+    tr = pd.concat(trs, ignore_index=True) if trs else events.trades(data(syms[0], interval), pd.Series(False, data(syms[0], interval).index), 1, side, window, 0.0)
     return events.summarize(tr, unc, unc_adv), tr
 
 
