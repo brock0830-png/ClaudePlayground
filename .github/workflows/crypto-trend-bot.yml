@@ -1,0 +1,55 @@
+# Daily run of the crypto trend-basket bot (crypto/bot). Paper mode unless you deliberately enable live:
+#   1. set `mode: live` in crypto/bot/configs/trend_basket.yaml,
+#   2. add repository secrets BOT_API_KEY and BOT_API_SECRET (+ BOT_API_PASSWORD if the venue uses one),
+#   3. add the repository variable BOT_LIVE_CONFIRM = I_UNDERSTAND.
+# GitHub-hosted runners are in the US, where Binance.com refuses connections, so the default venue here is Kraken
+# (override with the repository variables BOT_EXCHANGE and BOT_QUOTE). Scheduled workflows only run from the
+# repository's default branch.
+name: crypto-trend-bot
+
+on:
+  schedule:
+    - cron: "7 0 * * *"   # 00:07 UTC, just after the daily candle closes
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Plan only, place no orders"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crypto-trend-bot
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r crypto/bot/requirements.txt
+      - name: Run bot
+        env:
+          BOT_EXCHANGE: ${{ vars.BOT_EXCHANGE || 'kraken' }}
+          BOT_QUOTE: ${{ vars.BOT_QUOTE || 'USD' }}
+          BOT_LIVE_CONFIRM: ${{ vars.BOT_LIVE_CONFIRM }}
+          BOT_API_KEY: ${{ secrets.BOT_API_KEY }}
+          BOT_API_SECRET: ${{ secrets.BOT_API_SECRET }}
+          BOT_API_PASSWORD: ${{ secrets.BOT_API_PASSWORD }}
+          BOT_WEBHOOK_URL: ${{ secrets.BOT_WEBHOOK_URL }}
+        run: |
+          python crypto/bot/trend_bot.py --config crypto/bot/configs/trend_basket.yaml ${{ inputs.dry_run && '--dry-run' || '' }}
+      - name: Commit bot state
+        if: always()
+        run: |
+          git config user.name "crypto-trend-bot"
+          git config user.email "crypto-trend-bot@users.noreply.github.com"
+          git add crypto/bot/state || true
+          git diff --cached --quiet || git commit -m "bot state $(date -u +%F)"
+          git push || echo "state push failed"

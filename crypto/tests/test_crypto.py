@@ -112,3 +112,12 @@ def test_clustered_t_survives_object_dtype():
     empty = events.trades(df, pd.Series(False, df.index), 4, "long", (df.index[0], df.index[-1]), 0.0, sym="B")
     mixed = pd.concat([tr, empty], ignore_index=True)
     assert np.isfinite(events.clustered_t(mixed))
+
+
+def test_engine_never_borrows_on_the_frozen_rule():
+    import research as R
+    O, C, E, cost = R.panel()
+    W, Rf = R.weights("SMA", {"N": 50, "btc_gate": True}, C, E)
+    res = pf.simulate(W, Rf, O, C, cost)
+    cash = res["equity"] - res["held"].sum(axis=1)
+    assert (cash / res["equity"]).min() > -1e-9

@@ -1,0 +1,30 @@
+# Frozen H4 finalist (crypto/PREREG.md, crypto/REPORT.md). Change the strategy block and it is no longer the tested rule.
+name: trend_basket
+strategy:
+  sma_len: 50           # hold a coin while its daily close > SMA(50)
+  gate_len: 100         # alts only while BTC daily close > BTC SMA(100)
+  gate_coin: BTC
+  eligibility_days: 200 # a coin needs 200 days of history first
+
+# Venue. Binance.com is what the research used. From the US use binanceus, kraken or coinbase (quote USD or USDT);
+# the bot skips coins the venue does not list and splits the book across the rest.
+# Environment overrides: BOT_EXCHANGE, BOT_QUOTE.
+exchange: binance
+quote: USDT
+
+universe: [BTC, ETH, BNB, XRP, ADA, DOGE, SOL, LINK, AVAX, DOT, LTC, TRX, BCH, ATOM,
+           NEAR, ETC, XLM, FIL, UNI, NEO, XTZ, ALGO, IOTA, ZEC, DASH, VET, QTUM, HBAR]
+
+mode: paper             # paper | live. Live also needs env BOT_LIVE_CONFIRM=I_UNDERSTAND and API keys in env.
+capital_usd: null       # cap the bot's book in quote currency (e.g. 2000); null = all quote cash + universe coins
+min_trade_usd: 10       # skip rebalance trims smaller than this (full exits always go through)
+
+paper:
+  start_cash: 10000
+  fee_bp: 10            # per side; also used to size orders net of costs in live mode
+
+# per-coin slippage + half-spread in bp (defaults: BTC/ETH 2, other majors 4, the rest 6)
+slippage_bp: {}
+
+halt_file: crypto/bot/STOP   # touch this file to stop all orders
+halt_action: hold            # hold | flatten (sell the whole universe on the next run)

@@ -6,6 +6,10 @@ near-miss H3|k=3.0|clv=off|long|G4h, and the client's own V1 and V6 on G30/C15. 
 holdout result can make them eligible.
 
 Refuses to run twice (crypto/reports/holdout/RAN_ONCE).
+
+v2 (2026-09-23): the first holdout (crypto/reports/holdout_v1_borrowing_engine) used a portfolio engine that let cash
+go negative on switch-on days. The bot's replay test exposed it. The engine was fixed, the design stage rerun (same
+selection, same verdicts), and this is the rerun of the unchanged frozen rule on the corrected engine.
 """
 from __future__ import annotations
 
@@ -39,6 +43,8 @@ def main():
         R.port_row("holdout", "BM", b, b, {}, w, 0, 1.0, m)
         rows.append({"cell": b, **m})
         r.to_frame("ret").to_parquet(OUT / f"ret_{b}.parquet")
+    v = json.loads((cdata.ROOT / "reports" / "design" / "portfolio_verdict.json").read_text())["H4"]
+    assert v["PASS"] and v["selected"] == "SMA50 btcgate=on", v  # the frozen selection
     sel = {"N": 50, "btc_gate": True}
     fam_sh = []
     for hyp, rule, p in R.portfolio_cells():

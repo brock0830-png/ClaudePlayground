@@ -1,0 +1,40 @@
+//@version=6
+// =============================================================================
+// Trend Basket: the rule the crypto bot trades (crypto/PREREG.md H4, crypto/REPORT.md)
+// Use it on the DAILY chart of any coin/USDT pair. A coin's slot is held while:
+//   daily close > SMA(50) of daily closes, and (for alts) BTC daily close > BTC SMA(100).
+// The bot splits capital equally across every eligible coin (200+ days of history) and
+// runs just after the 00:00 UTC daily close. This script only shows the per-coin state;
+// the equal-slot sizing and the monthly reset live in crypto/bot/trend_bot.py.
+// Tested: design 2018-2023 and one-shot holdout 2024-01-01 to 2026-09-22 (costs included).
+// =============================================================================
+indicator("Trend Basket (SMA50 + BTC gate)", "TrendBasket", overlay=true)
+
+smaLen  = input.int(50, "Coin SMA length (frozen: 50)")
+gateLen = input.int(100, "BTC gate SMA length (frozen: 100)")
+btcSym  = input.symbol("BINANCE:BTCUSDT", "Gate symbol")
+showBg  = input.bool(true, "Shade bars where the slot is held")
+
+if timeframe.period != "1D"
+    runtime.error("Trend Basket is defined on the daily (1D) chart")
+
+coinSma = ta.sma(close, smaLen)
+[btcC, btcSma] = request.security(btcSym, "1D", [close, ta.sma(close, gateLen)], lookahead = barmerge.lookahead_off)
+isGateCoin = syminfo.basecurrency == "BTC"
+gateOpen   = btcC > btcSma
+held       = close > coinSma and (isGateCoin or gateOpen)
+// the decision uses the closed bar; the bot fills at the next day's open
+turnOn  = barstate.isconfirmed and held and not held[1]
+turnOff = barstate.isconfirmed and not held and held[1]
+
+plot(coinSma, "SMA", color = held ? color.new(color.teal, 0) : color.new(color.gray, 30), linewidth = 2)
+bgcolor(showBg and held ? color.new(color.teal, 90) : na, title = "held")
+plotshape(turnOn,  "ON",  shape.triangleup,   location.belowbar, color.new(color.teal, 0), size = size.small, text = "ON")
+plotshape(turnOff, "OFF", shape.triangledown, location.abovebar, color.new(color.red, 0),  size = size.small, text = "OFF")
+plotchar(not isGateCoin and not gateOpen, "BTC gate closed", "•", location.top, color.new(color.orange, 0), size = size.tiny)
+
+alertcondition(turnOn,  "Trend Basket ON",  "Trend Basket: {{ticker}} slot ON (buy at next open)")
+alertcondition(turnOff, "Trend Basket OFF", "Trend Basket: {{ticker}} slot OFF (sell at next open)")
+
+plot(held ? 1 : 0, "scr_held", display = display.none)
+plot(gateOpen ? 1 : 0, "scr_gate", display = display.none)

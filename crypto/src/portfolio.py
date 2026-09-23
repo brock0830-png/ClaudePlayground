@@ -3,6 +3,7 @@
 W (dates x coins) holds target weights decided at the close of day d. They are executed at the open of day
 d+1+delay. On a rebalance day (R true) every holding is reset to its target. On other days only coins whose target
 switches between zero and non-zero are traded, and the rest drift. Costs are |trade| x cost per side, paid from cash.
+Buys are scaled down pro rata when cash plus sale proceeds cannot cover them, so the account never borrows.
 """
 from __future__ import annotations
 
@@ -47,6 +48,13 @@ def simulate(W: pd.DataFrame, R: pd.Series, opens: pd.DataFrame, closes: pd.Data
             c0 = float(np.abs(target(e_now) - h) @ cv)
             tgt = target(e_now - c0)
             tr = tgt - h
+            # spot account: buys are limited to cash plus this rebalance's sale proceeds (no borrowing)
+            b = tr > 0
+            need = float(tr[b] @ (1 + cv[b])) if b.any() else 0.0
+            avail = cash + float(-tr[~b] @ (1 - cv[~b])) if (~b).any() else cash
+            if need > avail > -1e18 and need > 0:
+                tr = np.where(b, tr * max(avail, 0.0) / need, tr)
+                tgt = h + tr
             moved = np.abs(tr) > 1e-12 * max(e_now, 1e-12)
             c = float(np.abs(tr[moved]) @ cv[moved]) if moved.any() else 0.0
             turn[d] = np.abs(tr).sum() / e_now if e_now > 0 else 0.0
