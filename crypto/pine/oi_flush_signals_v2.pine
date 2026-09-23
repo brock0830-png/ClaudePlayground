@@ -1,0 +1,140 @@
+//@version=6
+// =============================================================================
+// OI Flush Signals  (Entropics)
+// Two modes, matching the backtests:
+//   USD perp flush   -> chart a Binance USDT perp on 1h   (e.g. BINANCE:SOLUSDT.P)
+//       signal: 24h price change <= -4.6%  AND  24h OI change <= -1.8%
+//   Alt/BTC stack + flush -> chart a BTC pair on 30m      (e.g. BINANCE:SOLBTC)
+//       signal: close <= -3/-4/-5% vs EMA50/100/200  AND  alt perp 24h OI change <= -3.1%
+// Entry = next bar open after the signal bar closes. Exit = close of the bar
+// `hold` hours later. One signal per hold window (no overlapping trades).
+// OI comes from TradingView's BINANCE:<BASE>USDT.P_OI feed.
+// Thresholds were fixed on 2022-23 data; do not tune them on recent charts.
+// v2: size tier by depth of the OI drop (deeper flush -> bigger bounce in both
+//     2022-23 and 2024-26). USD mode: 1x / 1.5x / 2x at -1.8 / -3.2 / -6.0 %.
+//     Alt/BTC mode: 1x, or 2x when OI is down 8.4%+ (the only tier split that held in both periods).
+// =============================================================================
+indicator("OI Flush Signals v2", "OI Flush v2", overlay=true, max_labels_count=500, max_bars_back=600)
+
+// ---------- inputs
+mode       = input.string("Auto", "Mode", options=["Auto", "USD perp flush", "Alt/BTC stack + flush"],
+             tooltip="Auto: BTC-quoted chart -> Alt/BTC mode, otherwise USD mode")
+oiOverride = input.string("", "OI symbol override (blank = auto)",
+             tooltip="Auto builds BINANCE:<BASE>USDT.P_OI from the chart's base currency")
+holdH      = input.int(24, "Hold (hours)", minval=1)
+
+grpU   = "USD perp flush (use 1h chart)"
+usdRet = input.float(-4.6, "24h price change <= (%)", group=grpU)
+usdOI  = input.float(-1.8, "24h OI change <= (%)",    group=grpU)
+
+grpR  = "Alt/BTC stack + flush (use 30m chart)"
+d50T  = input.float(-3.0, "Close vs EMA50 <= (%)",  group=grpR)
+d100T = input.float(-4.0, "Close vs EMA100 <= (%)", group=grpR)
+d200T = input.float(-5.0, "Close vs EMA200 <= (%)", group=grpR)
+relOI = input.float(-3.1, "Alt perp 24h OI change <= (%)", group=grpR)
+
+grpT   = "Size tiers (by OI drop depth)"
+usdT2  = input.float(-3.2, "USD: 1.5x when OI 24h <= (%)", group=grpT)
+usdT3  = input.float(-6.0, "USD: 2x when OI 24h <= (%)",   group=grpT)
+relT2  = input.float(-8.4, "Alt/BTC: 2x when OI 24h <= (%)", group=grpT)
+
+showTable = input.bool(true, "Show status table")
+showHold  = input.bool(true, "Shade the holding window")
+
+// ---------- mode + timing
+useRel   = mode == "Alt/BTC stack + flush" or (mode == "Auto" and syminfo.currency == "BTC")
+tfSec    = timeframe.in_seconds()
+bars24   = math.max(1, math.round(86400 / tfSec))
+holdBars = math.max(1, math.round(holdH * 3600 / tfSec))
+tfOK     = useRel ? tfSec == 1800 : tfSec == 3600
+
+// ---------- open interest (alt's USDT perp on Binance)
+oiSym = oiOverride != "" ? oiOverride : "BINANCE:" + syminfo.basecurrency + "USDT.P_OI"
+oi    = request.security(oiSym, timeframe.period, close, ignore_invalid_symbol=true)
+oiChg = 100 * (oi / oi[bars24] - 1)
+
+// ---------- price conditions
+ret24 = 100 * (close / close[bars24] - 1)
+e50   = ta.ema(close, 50)
+e100  = ta.ema(close, 100)
+e200  = ta.ema(close, 200)
+d50   = 100 * (close / e50 - 1)
+d100  = 100 * (close / e100 - 1)
+d200  = 100 * (close / e200 - 1)
+stack = d50 <= d50T and d100 <= d100T and d200 <= d200T
+
+usdSig = ret24 <= usdRet and oiChg <= usdOI
+relSig = stack and oiChg <= relOI
+rawSig = not na(oiChg) and (useRel ? relSig : usdSig)
+
+// size multiplier from OI depth
+sizeMult = useRel ? (oiChg <= relT2 ? 2.0 : 1.0) : (oiChg <= usdT3 ? 2.0 : oiChg <= usdT2 ? 1.5 : 1.0)
+tierTx   = str.tostring(sizeMult, "#.#") + "x"
+tierCol  = sizeMult >= 2.0 ? color.new(#00897b, 0) : sizeMult >= 1.5 ? color.new(#26a69a, 0) : color.new(#80cbc4, 0)
+
+// ---------- one trade per hold window, confirmed bars only (no repaint)
+var int lastSig = na
+var int exitAt  = na
+sig = rawSig and barstate.isconfirmed and (na(lastSig) or bar_index - lastSig >= holdBars)
+
+base   = syminfo.basecurrency
+modeTx = useRel ? "rel" : "usd"
+
+if sig
+    lastSig := bar_index
+    exitAt  := bar_index + holdBars
+    label.new(bar_index, low, (useRel ? "FLUSH vs BTC\n" : "FLUSH\n") + tierTx,
+              style=label.style_label_up, yloc=yloc.belowbar,
+              color=tierCol, textcolor=color.white, size=size.small)
+    entryMsg = '{"action":"open","side":"long","base":"' + base + '","mode":"' + modeTx +
+               '","hedge":"' + (useRel ? "BTC" : "none") + '","hold_hours":' + str.tostring(holdH) +
+               ',"ticker":"' + syminfo.tickerid + '","signal_close":' + str.tostring(close) +
+               ',"oi_24h_pct":' + str.tostring(oiChg, "#.##") +
+               ',"size_mult":' + str.tostring(sizeMult, "#.#") + '}'
+    alert(entryMsg, alert.freq_once_per_bar_close)
+
+exitNow = not na(exitAt) and bar_index == exitAt and barstate.isconfirmed
+if exitNow
+    label.new(bar_index, high, "exit", style=label.style_label_down, yloc=yloc.abovebar,
+              color=color.new(color.gray, 20), textcolor=color.white, size=size.tiny)
+    exitMsg = '{"action":"close","base":"' + base + '","mode":"' + modeTx +
+              '","hedge":"' + (useRel ? "BTC" : "none") + '","ticker":"' + syminfo.tickerid + '"}'
+    alert(exitMsg, alert.freq_once_per_bar_close)
+    exitAt := na
+
+inHold = not na(exitAt) and bar_index > lastSig and bar_index <= exitAt
+bgcolor(showHold and inHold ? color.new(color.teal, 90) : na, title="Holding window")
+
+// simple alertconditions too (for non-webhook phone/email alerts)
+alertcondition(sig,     "OI flush entry", "OI flush entry on {{ticker}}")
+alertcondition(exitNow, "OI flush exit",  "OI flush exit on {{ticker}}")
+
+// data-window values for checking against the backtest
+plot(oiChg, "OI 24h %",     display=display.data_window)
+plot(ret24, "Price 24h %",  display=display.data_window)
+plot(d50,   "vs EMA50 %",   display=display.data_window)
+plot(d100,  "vs EMA100 %",  display=display.data_window)
+plot(d200,  "vs EMA200 %",  display=display.data_window)
+plot(sig ? 1 : 0, "signal", display=display.data_window)
+plot(rawSig ? sizeMult : na, "size tier", display=display.data_window)
+
+// ---------- status table
+var table tb = table.new(position.top_right, 2, 8, border_width=1)
+fmt(x) => na(x) ? "n/a" : str.tostring(x, "#.##") + "%"
+cell(r, k, v, ok) =>
+    table.cell(tb, 0, r, k, text_color=color.white, bgcolor=color.new(color.black, 20), text_size=size.small)
+    table.cell(tb, 1, r, v, text_color=color.white, text_size=size.small,
+               bgcolor=ok ? color.new(color.teal, 30) : color.new(color.gray, 50))
+
+if showTable and barstate.islast
+    cell(0, "Mode", useRel ? "Alt/BTC stack + flush" : "USD perp flush", true)
+    cell(1, "Timeframe", tfOK ? "OK" : (useRel ? "use 30m" : "use 1h"), tfOK)
+    cell(2, "OI feed", na(oi) ? "missing: " + oiSym : oiSym, not na(oi))
+    cell(3, "OI 24h", fmt(oiChg), oiChg <= (useRel ? relOI : usdOI))
+    if useRel
+        cell(4, "vs EMA50/100/200", fmt(d50) + " / " + fmt(d100) + " / " + fmt(d200), stack)
+    else
+        cell(4, "Price 24h", fmt(ret24), ret24 <= usdRet)
+    cell(5, "Signal now", rawSig ? "YES" : "no", rawSig)
+    cell(6, "Size tier", rawSig ? tierTx : "(" + tierTx + " if it fired)", rawSig)
+    cell(7, "In trade", inHold ? "yes, exit in " + str.tostring(exitAt - bar_index) + " bars" : "no", inHold)
