@@ -112,7 +112,7 @@ def opening_type(P: np.ndarray, jump, minute: np.ndarray, f: dict, prior_hi, pri
     the final label that also needs period B for Open-Drive (`open_type`), and the direction and
     reference fields the trades use."""
     out = dict(open_A="", open_type="", od_dir=0, otd_dir=0, orr_dir=0, orr_ext=np.nan,
-               od_full=False)
+               od_full=False, od_dist=np.nan, otd_dist=np.nan, otd_back=False)
     O, or_hi, or_lo = f["O"], f["or_hi"], f["or_lo"]
     nA = int((minute < RTH0 + 30).sum())
     nOR = int((minute < RTH0 + OR_MIN).sum())
@@ -149,6 +149,24 @@ def opening_type(P: np.ndarray, jump, minute: np.ndarray, f: dict, prior_hi, pri
                 otd.append((kt, 1))
     if otd:
         out["otd_dir"] = min(otd)[1]
+    # Drive distance beyond the OR by 10:00, in ticks (explore variant "drive05", addendum 1).
+    # For OTD the extreme on the drive side can only come after the reversal: before it, price
+    # never traded beyond that OR extreme. otd_back: after the reversal, did A trade back beyond the
+    # OR extreme on the test side (descriptive only).
+    if out["od_dir"] == 1:
+        out["od_dist"] = float(PA.max() - or_hi)
+    elif out["od_dir"] == -1:
+        out["od_dist"] = float(or_lo - PA.min())
+    if out["otd_dir"]:
+        kt = min(otd)[0]
+        if out["otd_dir"] == -1:
+            kr = kt + _first(PA[kt:] < or_lo)
+            out["otd_dist"] = float(or_lo - PA.min())
+            out["otd_back"] = bool((PA[kr:] > or_hi).any())
+        else:
+            kr = kt + _first(PA[kt:] > or_hi)
+            out["otd_dist"] = float(PA.max() - or_hi)
+            out["otd_back"] = bool((PA[kr:] < or_lo).any())
     # Open-Rejection-Reverse
     if med_arange == med_arange and med_arange > 0:
         thr = 0.25 * med_arange
@@ -289,7 +307,8 @@ def cross_session(S: pd.DataFrame, bars: pd.DataFrame, feats: list[dict]) -> pd.
     for t in range(n):
         b0, b1 = int(S["b0"].iloc[t]), int(S["b1"].iloc[t])
         if t == 0:
-            rows.append(dict(open_A="", open_type="", od_dir=0, otd_dir=0, orr_dir=0, orr_ext=np.nan, od_full=False))
+            rows.append(dict(open_A="", open_type="", od_dir=0, otd_dir=0, orr_dir=0, orr_ext=np.nan, od_full=False,
+                             od_dist=np.nan, otd_dist=np.nan, otd_back=False))
             continue
         rows.append(opening_type(Pall[4 * b0:4 * b1], None, minute[b0:b1], feats[t],
                                  D["H"].iloc[t - 1], D["L"].iloc[t - 1],

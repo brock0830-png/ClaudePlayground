@@ -101,10 +101,22 @@ def mp1c(ctx, v):
 
 
 # ------------------------------------------------------------------------------------------------ opening types
+def _drive_ok(D, d, col, v) -> bool:
+    """Explore variant "drive05" (addendum 1): the drive also reached at least drive_min x the
+    20-day median A-period range beyond the OR by 10:00."""
+    k = v.get("drive_min")
+    if k is None:
+        return True
+    med = D["med20_arange"].iloc[d]
+    return bool(med == med and D[col].iloc[d] >= k * med)
+
+
 def mp2(ctx, v):
     """Open-Drive: enter 10:00 in drive direction, stop = trade back through the OR."""
     D, out = ctx.D, []
     for d in np.flatnonzero(D["open_A"].to_numpy() == "OD"):
+        if not _drive_ok(D, d, "od_dist", v):
+            continue
         s = int(D["od_dir"].iloc[d])
         stop = D["or_lo"].iloc[d] - 1 if s > 0 else D["or_hi"].iloc[d] + 1
         out.append(_at(ctx, d, M_1000, s, stop=stop))
@@ -131,6 +143,8 @@ def mp4(ctx, v):
     """Open-Test-Drive: enter 10:00 in drive direction, stop = back through the OR."""
     D, out = ctx.D, []
     for d in np.flatnonzero(D["open_A"].to_numpy() == "OTD"):
+        if not _drive_ok(D, d, "otd_dist", v):
+            continue
         s = int(D["otd_dir"].iloc[d])
         stop = D["or_lo"].iloc[d] - 1 if s > 0 else D["or_hi"].iloc[d] + 1
         out.append(_at(ctx, d, M_1000, s, stop=stop))
@@ -636,14 +650,17 @@ def mp28(ctx, v):
 # ------------------------------------------------------------------------------------------------ registry
 P = dict(id="P", desc="spec definition", eligible=True)
 VOL = dict(id="volVA", desc="volume value area (robustness only)", va="vol", eligible=False)
+# Addendum 1 (requested after the first explore freeze, run on the explore period only):
+DRIVE05 = dict(id="drive05", desc="drive >= 0.5x 20-day median A-range beyond the OR by 10:00",
+               drive_min=0.5, eligible=True, addendum=1)
 
 FAMILIES = [
     # (family, generator, primary baseline, variants)
     ("MP1", mp1, "loc", [P, VOL]),
     ("MP1c", mp1c, "loc", [P, VOL]),
-    ("MP2", mp2, "all", [P]),
+    ("MP2", mp2, "all", [P, DRIVE05]),
     ("MP3", mp3, "all", [P]),
-    ("MP4", mp4, "all", [P]),
+    ("MP4", mp4, "all", [P, DRIVE05]),
     ("MP5", mp5, "loc", [P]),
     ("MP6", mp6, "loc", [P]),
     ("MP7", mp7, "all", [P]),

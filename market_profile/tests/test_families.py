@@ -180,3 +180,18 @@ def test_mp23_confirmed_auction_point_retest():
     t = run_trades(c, fm.mp23(c, {}))
     assert len(t) == 1 and t["side"].iloc[0] == 1 and t["entry"].iloc[0] == 121 and t["d"].iloc[0] == 2
     assert t["exit"].iloc[0] == 131
+
+
+def test_drive05_threshold_is_half_the_median_a_range():
+    D = pd.DataFrame({"med20_arange": [40.0, 40.0, np.nan], "od_dist": [20.0, 19.0, 30.0]})
+    v = dict(drive_min=0.5)
+    assert fm._drive_ok(D, 0, "od_dist", v) and not fm._drive_ok(D, 1, "od_dist", v)
+    assert not fm._drive_ok(D, 2, "od_dist", v)                  # no 20-session history
+    assert fm._drive_ok(D, 1, "od_dist", {})                     # primary definition unaffected
+
+
+def test_drive05_is_a_subset_of_the_primary(ctx):
+    for gen in (fm.mp2, fm.mp4):
+        base = {t.d for t in gen(ctx, {})}
+        var = {t.d for t in gen(ctx, fm.DRIVE05)}
+        assert var <= base

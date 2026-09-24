@@ -159,10 +159,14 @@ def run_trades(ctx: Ctx, trades: list[Trade]) -> pd.DataFrame:
 class Baseline:
     """Unconditional moves from clock time tau to exit rule X, per session (cached)."""
 
-    def __init__(self, ctx: Ctx):
+    def __init__(self, ctx: Ctx, mask: np.ndarray | None = None):
+        """mask: sessions that make up the stage's sample (default: all sessions in ctx). The
+        confirm stage builds its context with earlier sessions for look-back only and passes the
+        2017-2021 sessions here, so the baseline comes from the same sample as the trades."""
         self.ctx = ctx
         self.cache: dict = {}
         self.loc = ctx.D["open_loc"].to_numpy()
+        self.mask = np.ones(ctx.n, dtype=bool) if mask is None else np.asarray(mask, dtype=bool)
 
     def moves(self, tau, rule: tuple) -> np.ndarray:
         key = (tau, rule)
@@ -185,8 +189,8 @@ class Baseline:
 
     def expected(self, tau, rule: tuple, loc=None) -> float:
         m = self.moves(tau, rule)
-        if loc is not None:
-            m = m[self.loc == loc]
+        keep = self.mask if loc is None else self.mask & (self.loc == loc)
+        m = m[keep]
         return float(np.nanmean(m)) if np.isfinite(m).any() else math.nan
 
 

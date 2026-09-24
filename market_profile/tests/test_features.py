@@ -246,3 +246,20 @@ def test_b_shape_after_two_sessions_of_higher_value():
                               + [(160, 155, 165, 160)] * 11)
     D = run_cross([flat(100, 120), flat(120, 140), flat(140, 160), b_day])
     assert D["b_shape"].iloc[3] and not D["p_shape"].iloc[3]
+
+
+# ---------------------------------------------------------------- addendum 1: drive distance by 10:00
+def test_open_drive_distance_beyond_or_by_ten():
+    # OR 1000-1004; by 10:00 the drive reaches 1024 -> 20 ticks beyond the OR high
+    b = bars_from_path([(0, 1000), (5, 1004), (30, 1024), (405, 1030)])
+    o = otype(b, prior_hi=1100, prior_lo=900)
+    assert o["open_A"] == "OD" and o["od_dist"] == 20
+    b2 = bars_from_path([(0, 1000), (5, 1004), (30, 1023), (405, 1030)])
+    assert otype(b2, prior_hi=1100, prior_lo=900)["od_dist"] == 19
+
+
+def test_open_test_drive_distance_and_trade_back():
+    b = bars_from_path([(0, 1000), (5, 1003), (12, 1013), (25, 990), (30, 988), (405, 980)])
+    o = otype(b, prior_hi=1010, prior_lo=950)
+    assert o["open_A"] == "OTD" and o["otd_dist"] == 12 and not o["otd_back"]
+    assert np.isnan(o["od_dist"])
