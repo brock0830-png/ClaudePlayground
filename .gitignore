@@ -5,3 +5,5 @@ data/raw/*.csv
 data/raw/*.parquet
 data/cache/
 *.bin
+market_profile/data/raw/
+market_profile/data/derived/
