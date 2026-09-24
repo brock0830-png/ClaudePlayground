@@ -11,11 +11,15 @@ rule that the spec states.
   early-close days). A session is dropped if it has fewer than 60 RTH bars, its first bar is after
   09:35, or it has fewer than 30 bars in the first hour. Overnight (ETH) for a session is every bar
   between the prior RTH close and this session's 09:30 open. This includes any exchange-holiday Globex
-  trading in between.
+  trading in between. Days with no RTH bars in the Databento file (ES 2014-06-12, 06-13,
+  09-23 to 09-25, 12-31: Databento flags these as degraded) are logged in
+  `sessions_dropped_<SYM>.csv`. The next session's "prior session" is then the last one with data.
 - **C7 Roll and back-adjustment.** The front month is Databento `ES.v.0` / `NQ.v.0` (volume
   roll). At each roll, spread = new minus old, taken at the last RTH minute both contracts traded
   in the last RTH session fully on the old contract. The new contract's bars for that window are
-  fetched separately. The adjustment is additive and anchored on the latest contract. Databento
+  fetched separately. If the new contract has no bars there, the whole session is used, then up
+  to 5 earlier sessions. This happened once: the 2014-06 ES roll, on days Databento flags as
+  degraded. The adjustment is additive and anchored on the latest contract. Databento
   switches contracts at 00:00 UTC (evening ET), so an RTH session never straddles a roll. Roll
   dates, symbols and spreads are in `rolls_ES.csv` / `rolls_NQ.csv`.
 - **C3 TPO rows.** Rows are binned on the traded contract's own (unadjusted) ticks, then shifted

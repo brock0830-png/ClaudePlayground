@@ -71,32 +71,54 @@ def fetch_roll_spreads(sym: str, df: pd.DataFrame, rth_end_of: dict) -> pd.DataF
     rows = []
     for r in rp.itertuples():
         et_new = r.ts_new.tz_convert(ET)
-        # last RTH session that ended before the switch
-        days = [d for d in rth_end_of if rth_end_of[d] < et_new]
-        d = max(days)
-        end = rth_end_of[d]
-        start = end - pd.Timedelta(minutes=45)
-        new = c.timeseries.get_range(dataset="GLBX.MDP3", schema="ohlcv-1m", symbols=[int(r.new_id)],
-                                     stype_in="instrument_id", start=start.tz_convert("UTC"),
-                                     end=end.tz_convert("UTC")).to_df(price_type="float")
-        old = df.loc[start.tz_convert("UTC"):end.tz_convert("UTC") - pd.Timedelta(seconds=1)]
-        old = old[old["instrument_id"] == r.old_id]
-        both = old[["close"]].join(new[["close"]], how="inner", lsuffix="_old", rsuffix="_new")
-        if both.empty:
+        # last RTH session that ended before the switch; widen to the whole session, then step
+        # back up to 5 sessions, if the new contract has no common minute (degraded days) [C7]
+        days = sorted(d for d in rth_end_of if rth_end_of[d] < et_new)
+        both = None
+        for back in range(6):
+            d = days[-1 - back]
+            end = rth_end_of[d]
+            for start in (end - pd.Timedelta(minutes=45), pd.Timestamp(d).tz_localize(ET) + pd.Timedelta(minutes=RTH_START)):
+                new = _retry(c.timeseries.get_range, dataset="GLBX.MDP3", schema="ohlcv-1m", symbols=[int(r.new_id)],
+                                             stype_in="instrument_id", start=start.tz_convert("UTC"),
+                                             end=end.tz_convert("UTC")).to_df(price_type="float")
+                old = df.loc[start.tz_convert("UTC"):end.tz_convert("UTC") - pd.Timedelta(seconds=1)]
+                old = old[old["instrument_id"] == r.old_id]
+                if len(new) and len(old):
+                    both = old[["close"]].join(new[["close"]], how="inner", lsuffix="_old", rsuffix="_new")
+                    if len(both):
+                        break
+            if both is not None and len(both):
+                break
+        if both is None or both.empty:
             raise RuntimeError(f"no common minute for roll {r}")
         last = both.iloc[-1]
-        sym_old = c.symbology.resolve(dataset="GLBX.MDP3", symbols=[str(r.old_id)], stype_in="instrument_id",
-                                      stype_out="raw_symbol", start_date=str(d), end_date=str(d + pd.Timedelta(days=1)))
-        sym_new = c.symbology.resolve(dataset="GLBX.MDP3", symbols=[str(r.new_id)], stype_in="instrument_id",
-                                      stype_out="raw_symbol", start_date=str(d), end_date=str(d + pd.Timedelta(days=1)))
+        sym_old = _retry(c.symbology.resolve, dataset="GLBX.MDP3", symbols=[str(r.old_id)], stype_in="instrument_id",
+                                      stype_out="raw_symbol", start_date=d.strftime("%Y-%m-%d"),
+                                      end_date=(d + pd.Timedelta(days=1)).strftime("%Y-%m-%d"))
+        sym_new = _retry(c.symbology.resolve, dataset="GLBX.MDP3", symbols=[str(r.new_id)], stype_in="instrument_id",
+                                      stype_out="raw_symbol", start_date=d.strftime("%Y-%m-%d"),
+                                      end_date=(d + pd.Timedelta(days=1)).strftime("%Y-%m-%d"))
         rows.append(dict(ts_new=r.ts_new, old_id=r.old_id, new_id=r.new_id,
                          old_symbol=_first_symbol(sym_old, r.old_id), new_symbol=_first_symbol(sym_new, r.new_id),
-                         last_old_session=str(d), spread_ts=both.index[-1],
+                         last_old_session=d.strftime("%Y-%m-%d"), spread_ts=both.index[-1],
                          old_close=last["close_old"], new_close=last["close_new"],
                          spread=last["close_new"] - last["close_old"]))
     res = pd.DataFrame(rows)
     res.to_csv(out, index=False)
     return pd.read_csv(out, parse_dates=["ts_new", "spread_ts"])
+
+
+def _retry(fn, *a, **kw):
+    """Databento calls through the proxy occasionally 504; retry with backoff."""
+    import time
+    for i in range(5):
+        try:
+            return fn(*a, **kw)
+        except Exception:
+            if i == 4:
+                raise
+            time.sleep(5 * 2 ** i)
 
 
 def _first_symbol(resp: dict, iid) -> str:
@@ -153,7 +175,7 @@ def build_market(sym: str, force: bool = False) -> Market:
     ids = [rolls["old_id"].iloc[0]] + list(rolls["new_id"])
     cum_after = np.concatenate([np.cumsum(spread_t[::-1])[::-1], [0]])   # sum of spreads of later rolls
     # contracts can repeat ids only if Databento reuses them; guard by position in time instead
-    seg = np.searchsorted(pd.DatetimeIndex(rolls["ts_new"]).asi8, df.index.asi8, side="right")
+    seg = np.searchsorted(pd.DatetimeIndex(rolls["ts_new"]).as_unit("ns").asi8, df.index.as_unit("ns").asi8, side="right")
     off = cum_after[seg]
     assert (df["instrument_id"].to_numpy() == np.array(ids, dtype=np.int64)[seg]).all()
 
@@ -162,7 +184,7 @@ def build_market(sym: str, force: bool = False) -> Market:
     allb = pd.DataFrame({"ts": et, "o": px["open"], "h": px["high"], "l": px["low"], "c": px["close"],
                          "v": df["volume"].to_numpy(), "off": off, "iid": df["instrument_id"].to_numpy()})
 
-    ts = df.index.asi8                     # UTC ns, sorted
+    ts = df.index.as_unit("ns").asi8       # UTC ns, sorted
     sess_rows, rth_parts, dropped = [], [], []
     prev_end = None
     for r in cal.itertuples():
