@@ -45,3 +45,25 @@ suggest a different definition belong in a future spec (v4), tested on fresh dat
 - 1,650 explore sessions. One 2-tick-row day (2015-08-24, 119.75-point range). Six sessions have no RTH bars in the
   Databento file (2014-06-12, 06-13, 09-23 to 09-25, 12-31; Databento flags them as degraded). Details in
   `sessions_dropped_ES.csv`.
+
+## Addendum 1: Open-Drive / Open-Test-Drive drive distance (ledger rows 50-51)
+
+Requested after the first freeze and run before any confirm-stage data was loaded. It added exactly one logged variant
+to MP2 and to MP4 (`drive05`): the drive must also reach at least 0.5x the 20-day median A-period range beyond the
+opening range by 10:00, on top of the existing conditions. No other variants were tried. The primary MP2/MP4
+evaluations were re-run first and reproduced ledger rows 5 and 7 exactly.
+
+How often the labels occur (explore period, 1,630 sessions with 20 sessions of history):
+
+| Label | Original definition | With drive05 |
+|---|---|---|
+| Open-Drive at 10:00 (used by MP2) | 1,056 (64.8%) | 566 (34.7%) |
+| Open-Drive final (A and B) | 807 | 481 (29.5%) |
+| Open-Test-Drive (used by MP4) | 26 (1.6%) | 5 (0.3%) |
+
+- The 502 Open-Drive days that fail the distance test would become Open-Auction (290 in range, 212 out of range). They
+  cannot become Open-Test-Drive or Open-Rejection-Reverse, which both need a trade through the other side of the OR.
+- On 6 of the original 26 Open-Test-Drive days, price traded back through the OR within A after reversing. None of
+  the 5 drive05 days did, so a reading of the variant that also forbids that gives the same 5 days.
+- Results: MP2 drive05 566 trades, -1.53 net ticks, t 0.54. MP4 drive05 5 trades, -9.20 net ticks, t -1.31. Neither
+  meets the explore rule. The frozen list stays MP10 rejected leg + MP16.

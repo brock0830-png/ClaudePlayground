@@ -1,14 +1,14 @@
 {
-  "frozen_utc": "2026-09-24T15:01:40Z",
+  "frozen_utc": "2026-09-24T17:22:50Z",
   "spec_sha256": "dd382184a08dac2b5ff579b2d2ed61874ca78921615dc9a4f5c4c8787d92db35",
-  "code_commit": "9520bc4ce3caf33006cd8e57f24eb33fff9b087a",
+  "code_commit": "adbac502152726d9e7b2a5b213a4ad119767aed8",
   "stage": "explore",
   "rule": "eligible variant, mean net ticks > 0 and t over matched baseline >= 2.0",
   "explore_sample": [
     "2010-06-07",
     "2016-12-30"
   ],
-  "ledger_rows": 49,
+  "ledger_rows": 51,
   "cost_ticks_round_turn": 2.4,
   "candidates": [
     {
@@ -76,5 +76,40 @@
       },
       "book": "0-18 trend continuation; 43+ price should move opposite"
     }
-  }
+  },
+  "freeze_history": [
+    {
+      "frozen_utc": "2026-09-24T15:01:40Z",
+      "code_commit": "9520bc4ce3caf33006cd8e57f24eb33fff9b087a",
+      "ledger_rows": 49,
+      "candidates": [
+        {
+          "family": "MP10",
+          "variant_id": "rej",
+          "variant_desc": "rejected-into-VA leg only",
+          "ledger_id": 15,
+          "n_trades": 32,
+          "mean_net_ticks": 14.788,
+          "t_vs_baseline": 2.581
+        },
+        {
+          "family": "MP16",
+          "variant_id": "P",
+          "variant_desc": "spec definition",
+          "ledger_id": 35,
+          "n_trades": 111,
+          "mean_net_ticks": 2.474,
+          "t_vs_baseline": 2.259
+        }
+      ],
+      "note": "first freeze, ledger rows 1-49"
+    },
+    {
+      "frozen_utc": "2026-09-24T17:22:50Z",
+      "code_commit": "adbac502152726d9e7b2a5b213a4ad119767aed8",
+      "ledger_rows": 51,
+      "added": [],
+      "note": "addendum 1: MP2/MP4 drive05, ledger rows 50-51"
+    }
+  ]
 }

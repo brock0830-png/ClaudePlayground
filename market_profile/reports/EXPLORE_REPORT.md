@@ -1,8 +1,8 @@
 # Explore stage report (ES)
 
-**Ledger count: 49 evaluations** (`ledger/EXPLORE_LEDGER.csv`, ids 1-49); 45 eligible for freezing, 4 robustness-only.
+**Ledger count: 51 evaluations** (`ledger/EXPLORE_LEDGER.csv`, ids 1-51); 47 eligible for freezing, 4 robustness-only.
 
-Spec `SPEC_market_profile_ES_v3.md` sha256 `dd382184a08dac2b5ff579b2d2ed61874ca78921615dc9a4f5c4c8787d92db35`; code commit `9520bc4ce3caf33006cd8e57f24eb33fff9b087a`; run 2026-09-24T15:01:40Z.
+Spec `SPEC_market_profile_ES_v3.md` sha256 `dd382184a08dac2b5ff579b2d2ed61874ca78921615dc9a4f5c4c8787d92db35`; code commit `adbac502152726d9e7b2a5b213a4ad119767aed8`; run 2026-09-24T17:22:50Z.
 
 ## Data
 
@@ -76,6 +76,8 @@ Advance to confirm if eligible variant, mean net ticks > 0 and t over matched ba
 | 47 | MP27 | P | all | 81 | 37.0 | -3.36 | -18.40 | -0.96 | 0.38 | 0.38 | 1280 |  |
 | 48 | MP28 | P | all | 182 | 19.2 | -5.20 | -9.40 | -2.80 | -1.87 | -1.83 | 1073 |  |
 | 49 | MP28 | bal5 | all | 14 | 28.6 | -2.11 | -8.90 | 0.29 | 0.17 | 0.16 | 64 |  |
+| 50 | MP2 | drive05 | all | 566 | 38.0 | -1.53 | -13.40 | 0.87 | 0.54 | 0.52 | 1523 |  |
+| 51 | MP4 | drive05 | all | 5 | 20.0 | -9.20 | -7.40 | -6.80 | -1.31 | -1.10 | 51 |  |
 
 Net and gross are ticks per trade; max drawdown is in ticks on cumulative net.
 
@@ -90,7 +92,7 @@ Net and gross are ticks per trade; max drawdown is in ticks on cumulative net.
 
 ## Reading the result
 
-45 eligible evaluations were tested at t >= 2.0 (one-sided p about 0.023 each), so about 1.0 would pass by chance alone if no hypothesis had any edge. That is why the confirm stage (t >= 2.5 on 2017-2021, frozen definitions only) exists. The confirm stage has not been run.
+47 eligible evaluations were tested at t >= 2.0 (one-sided p about 0.023 each), so about 1.1 would pass by chance alone if no hypothesis had any edge. That is why the confirm stage (t >= 2.5 on 2017-2021, frozen definitions only) exists. The confirm stage has not been run.
 
 Observations on the explore results (no definitions changed): `reports/EXPLORE_NOTES.md`.
 

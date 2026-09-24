@@ -1,0 +1,31 @@
+{
+  "run_utc": "2026-09-24T17:22:50Z",
+  "code_commit": "adbac502152726d9e7b2a5b213a4ad119767aed8",
+  "variant": {
+    "id": "drive05",
+    "desc": "drive >= 0.5x 20-day median A-range beyond the OR by 10:00",
+    "drive_min": 0.5,
+    "eligible": true,
+    "addendum": 1
+  },
+  "label_counts": {
+    "sessions": 1650,
+    "sessions_with_20_session_history": 1630,
+    "od_at_1000_old": 1068,
+    "od_at_1000_new": 566,
+    "od_final_old": 807,
+    "od_final_new": 481,
+    "otd_old": 26,
+    "otd_new": 5,
+    "otd_traded_back_through_or_after_reversal": 6,
+    "od_at_1000_old_with_history": 1056,
+    "otd_old_with_history": 26,
+    "pct_of_sessions_with_history": {
+      "od_at_1000_new": 34.7,
+      "od_final_new": 29.5,
+      "otd_new": 0.3,
+      "od_at_1000_old": 64.8,
+      "otd_old": 1.6
+    }
+  }
+}
