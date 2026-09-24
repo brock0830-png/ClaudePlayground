@@ -61,8 +61,9 @@ How often the labels occur (explore period, 1,630 sessions with 20 sessions of h
 | Open-Drive final (A and B) | 807 | 481 (29.5%) |
 | Open-Test-Drive (used by MP4) | 26 (1.6%) | 5 (0.3%) |
 
-- The 502 Open-Drive days that fail the distance test would become Open-Auction (290 in range, 212 out of range). They
-  cannot become Open-Test-Drive or Open-Rejection-Reverse, which both need a trade through the other side of the OR.
+- 502 of the original 1,068 Open-Drive days drop out: 490 fail the distance test and 12 have no 20-session history.
+  They would become Open-Auction (290 in range, 212 out of range). They cannot become Open-Test-Drive or
+  Open-Rejection-Reverse, which both need a trade through the other side of the OR.
 - On 6 of the original 26 Open-Test-Drive days, price traded back through the OR within A after reversing. None of
   the 5 drive05 days did, so a reading of the variant that also forbids that gives the same 5 days.
 - Results: MP2 drive05 566 trades, -1.53 net ticks, t 0.54. MP4 drive05 5 trades, -9.20 net ticks, t -1.31. Neither

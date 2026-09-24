@@ -1,0 +1,121 @@
+{
+  "run_utc": "2026-09-24T17:23:42Z",
+  "code_commit": "19107a3ff1133ad83f703904997a309e5d0ced4f",
+  "spec_sha256": "dd382184a08dac2b5ff579b2d2ed61874ca78921615dc9a4f5c4c8787d92db35",
+  "stage": "confirm",
+  "sample": [
+    "2017-01-03",
+    "2021-12-31"
+  ],
+  "sessions": 1259,
+  "rule": "net-positive and t over matched baseline >= 2.5",
+  "cost_ticks_round_turn": 2.4,
+  "ledger_rows_total": 53,
+  "results": [
+    {
+      "ledger_id": 52,
+      "family": "MP10",
+      "variant_id": "rej",
+      "variant_desc": "rejected-into-VA leg only",
+      "baseline": "same open location",
+      "n_trades": 27,
+      "n_long": 14,
+      "n_short": 13,
+      "win_rate": 0.5185185185185185,
+      "mean_net_ticks": -13.325925925925924,
+      "median_net_ticks": 0.6000000000000001,
+      "mean_gross_ticks": -10.925925925925926,
+      "t_vs_baseline": -0.7784448698503189,
+      "t_vs_alt_baseline": -0.8277972035619281,
+      "max_dd_ticks": 359.79999999999995,
+      "total_net_ticks": -359.79999999999995,
+      "total_net_usd": -4497.499999999999,
+      "exits": "time:27",
+      "meets_explore_rule": false,
+      "by_year": {
+        "2017": {
+          "count": 5,
+          "mean": -13.4
+        },
+        "2018": {
+          "count": 4,
+          "mean": 2.6
+        },
+        "2019": {
+          "count": 7,
+          "mean": -8.97
+        },
+        "2020": {
+          "count": 6,
+          "mean": -14.57
+        },
+        "2021": {
+          "count": 5,
+          "mean": -30.6
+        }
+      },
+      "explore": {
+        "family": "MP10",
+        "variant_id": "rej",
+        "variant_desc": "rejected-into-VA leg only",
+        "ledger_id": 15,
+        "n_trades": 32,
+        "mean_net_ticks": 14.788,
+        "t_vs_baseline": 2.581
+      }
+    },
+    {
+      "ledger_id": 53,
+      "family": "MP16",
+      "variant_id": "P",
+      "variant_desc": "spec definition",
+      "baseline": "all days",
+      "n_trades": 49,
+      "n_long": 31,
+      "n_short": 18,
+      "win_rate": 0.7142857142857143,
+      "mean_net_ticks": 2.9061224489795907,
+      "median_net_ticks": 7.6,
+      "mean_gross_ticks": 5.3061224489795915,
+      "t_vs_baseline": 0.7024952167914995,
+      "t_vs_alt_baseline": 0.7456241217680056,
+      "max_dd_ticks": 235.4,
+      "total_net_ticks": 142.39999999999995,
+      "total_net_usd": 1779.9999999999993,
+      "exits": "target:36;time:13",
+      "meets_explore_rule": false,
+      "by_year": {
+        "2017": {
+          "count": 13,
+          "mean": 0.6
+        },
+        "2018": {
+          "count": 10,
+          "mean": 3.3
+        },
+        "2019": {
+          "count": 13,
+          "mean": 6.14
+        },
+        "2020": {
+          "count": 2,
+          "mean": 15.6
+        },
+        "2021": {
+          "count": 11,
+          "mean": -0.85
+        }
+      },
+      "explore": {
+        "family": "MP16",
+        "variant_id": "P",
+        "variant_desc": "spec definition",
+        "ledger_id": 35,
+        "n_trades": 111,
+        "mean_net_ticks": 2.474,
+        "t_vs_baseline": 2.259
+      }
+    }
+  ],
+  "survivors": []
+}
