@@ -30,8 +30,8 @@ Survivors to the final (2022-2026-08) look: none. The final stage has not been r
 - MP10 rejected leg reversed sign: -13.3 net ticks per trade (explore +14.8) and negative in 4 of 5 years. Its explore
   result rested on three large trades.
 - MP16 stayed net-positive (+2.9 net ticks, 71% winners, 36 of 49 trades reached the target), but it barely beat its
-  matched baseline (t 0.70 against the required 2.5). Entering at the open toward a nearby prior-day extreme did about
-  as well without the "poor" condition, so the poor high/low adds little. It had only 2 setups in 2020: fewer poor
+  matched baseline (t 0.70 against the required 2.5). The baseline is the same side entered at the open and held to
+  the close on every 2017-2021 session. It had only 2 setups in 2020: fewer poor
   extremes (24) and a 41-point median range meant the open was rarely within one IB width of an unrepaired one.
   An independent count of setups per year matches its trade count exactly.
 - Under spec section 6 neither candidate advances. The final 2022-2026 look and the NQ stage have nothing to test and
