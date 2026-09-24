@@ -27,12 +27,12 @@ def main():
              "## Data",
              "",
              f"- Databento `GLBX.MDP3` `ohlcv-1m`, `ES.v.0` + `NQ.v.0` (volume roll), full history. "
-             f"Cost estimate ${info['cost_usd']:.2f}; first available date {info['first_date']}.",
+             f"Billed ${info['cost_usd']:.2f} (equal to the free estimate); first available date {info['first_date']}.",
              f"- Explore sample: {F['explore_sample'][0]} to {F['explore_sample'][1]}, {info['explore_sessions']} RTH sessions. "
              f"Nothing after 2016-12-31 was loaded into the explore run.",
              f"- Rolls in the explore sample: {info['explore_rolls']} (full list in `rolls_ES.csv`). "
              f"Sessions dropped as unusable: {info['explore_dropped']} (`sessions_dropped_ES.csv`).",
-             f"- 2-tick rows (profile > 400 one-tick rows): {info['explore_rs2']} explore sessions (`ledger/row_size_log_ES.csv`).",
+             f"- 2-tick rows (profile > 400 one-tick rows): {info['explore_rs2']} explore session(s) (`ledger/row_size_log_ES.csv`).",
              f"- Costs: 1 tick slippage per side + $5 round turn = {F['cost_ticks_round_turn']:.1f} ticks per trade.",
              "",
              "## Rule",
@@ -65,7 +65,9 @@ def main():
     lines += ["", "## Reading the result", "",
               f"{n_elig} eligible evaluations were tested at t >= 2.0 (one-sided p about 0.023 each), so about "
               f"{0.023 * n_elig:.1f} would pass by chance alone if no hypothesis had any edge. That is why the confirm stage (t >= 2.5 "
-              "on 2017-2021, frozen definitions only) exists. The confirm stage has not been run."]
+              "on 2017-2021, frozen definitions only) exists. The confirm stage has not been run.",
+              "", "Observations on the explore results (no definitions changed): `reports/EXPLORE_NOTES.md`.", "",
+              "Profile parity against TradingView for the 3 latest sessions: `reports/PARITY_ES.md`."]
     (ROOT / "reports").mkdir(exist_ok=True)
     (ROOT / "reports" / "EXPLORE_REPORT.md").write_text("\n".join(lines) + "\n")
 

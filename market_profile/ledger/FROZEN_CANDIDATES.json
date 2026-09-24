@@ -1,0 +1,80 @@
+{
+  "frozen_utc": "2026-09-24T15:01:40Z",
+  "spec_sha256": "dd382184a08dac2b5ff579b2d2ed61874ca78921615dc9a4f5c4c8787d92db35",
+  "code_commit": "9520bc4ce3caf33006cd8e57f24eb33fff9b087a",
+  "stage": "explore",
+  "rule": "eligible variant, mean net ticks > 0 and t over matched baseline >= 2.0",
+  "explore_sample": [
+    "2010-06-07",
+    "2016-12-30"
+  ],
+  "ledger_rows": 49,
+  "cost_ticks_round_turn": 2.4,
+  "candidates": [
+    {
+      "family": "MP10",
+      "variant_id": "rej",
+      "variant_desc": "rejected-into-VA leg only",
+      "ledger_id": 15,
+      "n_trades": 32,
+      "mean_net_ticks": 14.788,
+      "t_vs_baseline": 2.581
+    },
+    {
+      "family": "MP16",
+      "variant_id": "P",
+      "variant_desc": "spec definition",
+      "ledger_id": 35,
+      "n_trades": 111,
+      "mean_net_ticks": 2.474,
+      "t_vs_baseline": 2.259
+    }
+  ],
+  "book_descriptives": {
+    "MP3": {
+      "orr_days": 497,
+      "initial_extreme_held": 0.20724346076458752,
+      "book": "initial extreme holds < 50% of the time"
+    },
+    "MP13": {
+      "n": 178,
+      "traded_beyond_va_first_90min": 0.8258426966292135,
+      "closed_within_or_beyond_va": 0.7752808988764045,
+      "book": "next day beyond prior VA in first 90 min: 64% (T-bonds 86-87)"
+    },
+    "MP14": {
+      "n": 155,
+      "traded_beyond_va_first_90min": 0.6,
+      "closed_within_or_beyond_va": 0.7419354838709677,
+      "book": "94% beyond VA in first 90 min; 97% closed within or beyond"
+    },
+    "MP14b": {
+      "n": 73,
+      "traded_beyond_va_first_90min": 0.726027397260274,
+      "closed_within_or_beyond_va": 0.7945205479452054,
+      "book": "71% / 82%"
+    },
+    "MP25": {
+      "narrow_days": 189,
+      "next_range_above_median": 0.2222222222222222,
+      "all_days_range_above_median": 0.48711656441717793,
+      "book": "narrow days come before big days"
+    },
+    "MP26": {
+      "n_days": 1324,
+      "over43": {
+        "n": 36,
+        "frac_next3_against": 0.3888888888888889
+      },
+      "under18": {
+        "n": 580,
+        "frac_next3_with": 0.4517241379310345
+      },
+      "middle": {
+        "n": 708,
+        "frac_next3_with": 0.5084745762711864
+      },
+      "book": "0-18 trend continuation; 43+ price should move opposite"
+    }
+  }
+}
