@@ -31,7 +31,9 @@ ET = "America/New_York"
 
 
 def key() -> str:
-    return (Path.home() / ".databento_key").read_text().strip()
+    """DATABENTO_API_KEY from the environment, else ~/.databento_key. Never stored in the repo."""
+    import os
+    return os.environ.get("DATABENTO_API_KEY") or (Path.home() / ".databento_key").read_text().strip()
 
 
 def raw_file() -> Path:

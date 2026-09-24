@@ -1,0 +1,14 @@
+{
+  "source": "Databento Historical API, dataset GLBX.MDP3, schema ohlcv-1m",
+  "symbols": ["ES.v.0", "NQ.v.0"],
+  "stype_in": "continuous (volume-based roll, front month)",
+  "request_start": "2010-06-06T00:00:00Z",
+  "request_end": "2026-09-24T05:39:20.287734Z",
+  "dataset_first_available": "2010-06-06",
+  "cost_estimate_usd": {"ES.v.0": 20.8036, "NQ.v.0": 20.1655, "total": 40.9691},
+  "record_count_estimate": {"ES.v.0": 5698393, "NQ.v.0": 5523603},
+  "billable_bytes_estimate": 628431776,
+  "estimate_utc": "2026-09-24T13:39Z",
+  "batch_job_id": "GLBX-20260924-BDH3HWLEGD",
+  "raw_files": "data/raw/ (gitignored; re-downloadable from the batch job without re-billing while Databento retains it)"
+}

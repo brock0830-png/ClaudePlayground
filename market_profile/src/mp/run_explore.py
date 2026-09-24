@@ -109,6 +109,20 @@ def descriptive(ctx: Ctx, tr_by: dict) -> dict:
     return out
 
 
+def write_data_info(ctx: Ctx) -> None:
+    man = json.load(open(ROOT / "DATA_MANIFEST.json"))
+    rolls = pd.read_csv(ROOT / "rolls_ES.csv", parse_dates=["ts_new"])
+    drop = pd.read_csv(ROOT / "sessions_dropped_ES.csv", parse_dates=["date"])
+    rs2 = ctx.D.loc[ctx.D["rs"] == 2, ["date", "range"]].assign(range_points=lambda x: x["range"] * 0.25)
+    (ROOT / "ledger").mkdir(exist_ok=True)
+    rs2[["date", "range_points"]].to_csv(ROOT / "ledger" / "row_size_log_ES.csv", index=False)
+    info = dict(cost_usd=man["cost_estimate_usd"]["total"], first_date=man["dataset_first_available"],
+                explore_sessions=int(ctx.n), explore_rolls=int((rolls["ts_new"].dt.tz_convert(None) <= EXPLORE_END).sum()),
+                explore_dropped=int((drop["date"] <= EXPLORE_END).sum()), explore_rs2=int(len(rs2)),
+                first_session=str(ctx.S["date"].min().date()), last_session=str(ctx.S["date"].max().date()))
+    json.dump(info, open(ROOT / "ledger" / "data_info.json", "w"), indent=2)
+
+
 def main(argv=None):
     if not tree_clean() and "--allow-dirty" not in (argv or sys.argv[1:]):
         sys.exit("commit src/, tests/ and CONVENTIONS.md first: the ledger records the code commit")
@@ -116,6 +130,7 @@ def main(argv=None):
     commit = git_head()
     ctx = build_ctx("ES", EXPLORE_END)
     assert ctx.S["date"].max() <= EXPLORE_END
+    write_data_info(ctx)
     base = Baseline(ctx)
     LEDGER.parent.mkdir(exist_ok=True)
     if LEDGER.exists():
