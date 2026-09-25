@@ -1,0 +1,10 @@
+outputs/*.parquet
+outputs/*.npy
+outputs/bits_*
+outputs/entrysets_*
+outputs/families/*.parquet
+outputs/*.log
+outputs/families/*.log
+outputs/families/coverage_*.csv
+outputs/coverage_F0.csv
+outputs/families/*_raw.csv

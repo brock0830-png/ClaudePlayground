@@ -1,0 +1,19 @@
+# SCALPEL-W-v42 canary report
+
+ES WO      ref    7722.00  got    7722.0000  err 0.0000  ok
+ES GB_TOP  ref    8070.75  got    8070.7496  err 0.0004  ok
+ES GB_BOT  ref    7912.99  got    7912.9910  err 0.0010  ok
+ES RB_TOP  ref    7515.92  got    7515.9203  err 0.0003  ok
+ES RB_BOT  ref    7370.84  got    7370.8402  err 0.0002  ok
+ES _sigma  ref     198.54  got     198.5354  err 0.0046  ok
+GC WO      ref    4413.00  got    4413.0000  err 0.0000  ok
+GC GB_TOP  ref    4666.18  got    4666.1809  err 0.0009  ok
+GC GB_BOT  ref    4575.50  got    4575.5038  err 0.0038  ok
+GC RB_TOP  ref    4299.14  got    4299.1368  err 0.0032  ok
+GC RB_BOT  ref    4212.94  got    4212.9423  err 0.0023  ok
+
+ES export check: 717 weeks; level math from exported WO, worst abs error across 18 level columns = 9.09e-13 pt
+ES export WO == first 4h open of Sunday-18:00 bucket in 711/717 weeks; differences: 2012-12-31, 2015-07-06, 2018-05-28, 2020-07-06, 2026-06-22, 2026-07-06
+(the differing weeks are the partial first week and TradingView holiday-week boundary quirks; this study uses the Sunday-18:00 bucket as the prompt specifies)
+
+CANARY PASS
