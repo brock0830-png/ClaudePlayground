@@ -242,5 +242,73 @@ def build(b):
     sma20 = d["c"].rolling(20).mean()
     t20 = np.sign(d["c"] - sma20).shift(1).values[bpos]
     F["trend20"] = pad(t20)
+    # ---------------- round 3 additions
+    # prior-week profile histograms (for TPO density at an arbitrary price: LVN / HVN proxy)
+    hist_by_week = {}
+    for wlab, g in bars.groupby("week", sort=True):
+        wo = g["open"].iloc[0]
+        bsz = BIN_SIG * wo * vol
+        lo = np.floor(g["low"].min() / bsz)
+        nbins = int(np.ceil(g["high"].max() / bsz) - lo) + 1
+        centers = (lo + np.arange(nbins) + 0.5) * bsz
+        h = np.zeros(nbins)
+        for hh, ll, ww in zip(g["high"].values, g["low"].values, wt_all[g.index.values]):
+            m = (centers >= ll) & (centers <= hh)
+            if m.any():
+                h[m] += ww / m.sum()
+        hist_by_week[wlab] = (lo, bsz, h / h.max() if h.max() > 0 else h)
+    F["phist"] = [hist_by_week.get(labels[pidx[w] - 1]) if pidx[w] >= 1 else None for w in wk.index]
+    # prior CME month profile (bin 0.04 weekly sigma)
+    mprof = {}
+    for mlab, g in bars.groupby("month", sort=True):
+        wo = g["open"].iloc[0]
+        mprof[mlab] = tpo_profile(g["high"].values, g["low"].values, wt_all[g.index.values], 2 * BIN_SIG * wo * vol)
+    mlabels = sorted(mprof)
+    midx = {m: i for i, m in enumerate(mlabels)}
+    mp_poc = np.full(nW, np.nan); mp_vah = mp_poc.copy(); mp_val = mp_poc.copy()
+    for i, m in enumerate(wk["month"].values):
+        j = midx[m] - 1
+        if j >= 0:
+            mp_poc[i], mp_vah[i], mp_val[i] = mprof[mlabels[j]]
+    F["mPOC"], F["mVAH"], F["mVAL"] = mp_poc, mp_vah, mp_val
+    # ---------------- round 4 additions
+    # two-weeks-ago profile (value migration, balance vs trend)
+    pp = np.full((nW, 3), np.nan)
+    for i, w in enumerate(wk.index):
+        j = pidx[w] - 2
+        if j >= 0:
+            pp[i] = prof[labels[j]]
+    F["ppPOC"], F["ppVAH"], F["ppVAL"] = pp[:, 0], pp[:, 1], pp[:, 2]
+    ov = np.fmin(F["pVAH"], F["ppVAH"]) - np.fmax(F["pVAL"], F["ppVAL"])
+    width = np.fmin(F["pVAH"] - F["pVAL"], F["ppVAH"] - F["ppVAL"])
+    F["va_overlap"] = np.where(width > 0, np.clip(ov, 0, None) / width, np.nan)
+    # developing current-week POC at the close of each bar (for gating the NEXT bar)
+    dev = np.full((nW, MAXB), np.nan)
+    for i, (s0, n) in enumerate(zip(starts, b.nb)):
+        g = bars.iloc[s0:s0 + n]
+        bsz = BIN_SIG * b.wo[i] * vol
+        H_, L_, W_ = g["high"].values, g["low"].values, wt_all[s0:s0 + n]
+        for j in range(n):
+            dev[i, j] = tpo_profile(H_[:j + 1], L_[:j + 1], W_[:j + 1], bsz)[0]
+    devp = np.full((nW, MAXB), np.nan)
+    devp[:, 1:] = dev[:, :-1]                 # value known at the close of the bar before
+    F["devPOC_prev"] = devp
+    cprev = np.full((nW, MAXB), np.nan)
+    cprev[:, 1:] = b.C[:, :-1]
+    F["close_prev"] = cprev
     b.F = F
     return F
+
+
+def tpo_density(F, P):
+    """Relative TPO density (0..1, 1 = POC) of the prior-week profile at price P[w]; nan if P is
+    outside the prior week's range or unknown."""
+    out = np.full(len(P), np.nan)
+    for i, (h, p) in enumerate(zip(F["phist"], P)):
+        if h is None or not np.isfinite(p):
+            continue
+        lo, bsz, hist = h
+        k = int(np.floor(p / bsz) - lo)
+        if 0 <= k < len(hist):
+            out[i] = hist[k]
+    return out

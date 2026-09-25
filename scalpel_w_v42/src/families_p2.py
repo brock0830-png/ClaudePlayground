@@ -304,9 +304,188 @@ P2R2 = {
 }
 FM.REGISTRY.update(P2R2)
 
+
+# ------------------------------------------------------------------ round 3 (REFINE + EXPAND)
+def mp_conf_tgt_va(tol):
+    base = mp_conf(["pPOC", "pVAH", "pVAL"], tol)
+    return base
+
+
+def in_va(mode):
+    def f(b, cell, P, od_nat, flip=False):
+        F = build(b)
+        allow, bar_ok = _base(b)
+        inside = (P >= F["pVAL"]) & (P <= F["pVAH"])
+        m = inside if mode == "in" else ~inside
+        return allow & np.isfinite(F["pVAL"]) & m, bar_ok, None
+    return f
+
+
+def node(kind):
+    from features import tpo_density
+
+    def f(b, cell, P, od_nat, flip=False):
+        F = build(b)
+        allow, bar_ok = _base(b)
+        dens = tpo_density(F, P)
+        m = (dens <= 0.30) if kind == "LVN" else (dens >= 0.70)
+        return allow & np.isfinite(dens) & m, bar_ok, None
+    return f
+
+
+P2R3 = {
+    "MP_ANY25": (mp_conf(["pPOC", "pVAH", "pVAL"], 0.25), False),
+    "MP_ANY40": (mp_conf(["pPOC", "pVAH", "pVAL"], 0.40), False),
+    "MP_ANY50": (mp_conf(["pPOC", "pVAH", "pVAL"], 0.50), False),
+    "MP_VA30": (mp_conf(["pVAH", "pVAL"], 0.30), False),
+    "MP_VA40": (mp_conf(["pVAH", "pVAL"], 0.40), False),
+    "MP30_TGT_VA": (mp_conf_tgt_va(0.30), False, dict(t_vals=np.array([]), t_names=[], tnext_fn=_tnext_va)),
+    "MP_IN_VA": (in_va("in"), False),
+    "MP_OUT_VA": (in_va("out"), False),
+    "LVN": (node("LVN"), False),
+    "HVN": (node("HVN"), False),
+    "MPM20": (mp_conf(["mPOC", "mVAH", "mVAL"], 0.20), False),
+}
+FM.REGISTRY.update(P2R3)
+
+
+# ------------------------------------------------------------------ round 4 (EXPAND)
+def migration(mode):
+    """Value migration: prior-week POC vs the POC two weeks back (moved >= 0.10 sigma)."""
+    def f(b, cell, P, od_nat, flip=False):
+        F = build(b)
+        allow, bar_ok = _base(b)
+        lg = _is_long(cell, od_nat, flip)
+        mv = (F["pPOC"] - F["ppPOC"]) / b.sigma
+        up, dn = mv >= 0.10, mv <= -0.10
+        m = (up if lg else dn) if mode == "with" else (dn if lg else up)
+        return allow & np.isfinite(mv) & m, bar_ok, None
+    return f
+
+
+def balance(mode):
+    """Balance = the prior two weekly value areas overlap by >= 50% of the narrower one."""
+    def f(b, cell, P, od_nat, flip=False):
+        F = build(b)
+        allow, bar_ok = _base(b)
+        o = F["va_overlap"]
+        m = (o >= 0.5) if mode == "balance" else (o < 0.5)
+        return allow & np.isfinite(o) & m, bar_ok, None
+    return f
+
+
+def dev_poc(mode):
+    """Developing weekly POC at the close before entry: 'below' = long only when the last close is
+    below it (short only above) - buying under developing value; 'above' = the reverse."""
+    def f(b, cell, P, od_nat, flip=False):
+        F = build(b)
+        allow, _ = _base(b)
+        lg = _is_long(cell, od_nat, flip)
+        cp, dp = F["close_prev"], F["devPOC_prev"]
+        below = cp < dp
+        above = cp > dp
+        m = (below if lg else above) if mode == "below" else (above if lg else below)
+        return allow, np.nan_to_num(m, nan=False).astype(bool), None
+    return f
+
+
+P2R4 = {
+    "VAMIG_with": (migration("with"), False),
+    "VAMIG_against": (migration("against"), False),
+    "BALANCE": (balance("balance"), False),
+    "TRENDWK": (balance("trend"), False),
+    "DEVPOC_below": (dev_poc("below"), False),
+    "DEVPOC_above": (dev_poc("above"), False),
+    "MPM15": (mp_conf(["mPOC", "mVAH", "mVAL"], 0.15), False),
+    "MPM30": (mp_conf(["mPOC", "mVAH", "mVAL"], 0.30), False),
+    "MPM_POC20": (mp_conf(["mPOC"], 0.20), False),
+    "MP_VAH30": (mp_conf(["pVAH"], 0.30), False),
+    "MP_VAL30": (mp_conf(["pVAL"], 0.30), False),
+    "MPWM20": (None, False),
+}
+def mp_week_and_month(tol=0.20):
+    w = mp_conf(["pPOC", "pVAH", "pVAL"], tol)
+    m = mp_conf(["mPOC", "mVAH", "mVAL"], tol)
+    def f(b, cell, P, od_nat, flip=False):
+        a1, bo, _ = w(b, cell, P, od_nat, flip)
+        a2, _, _ = m(b, cell, P, od_nat, flip)
+        return a1 & a2, bo, None
+    return f
+
+
+P2R4["MPWM20"] = (mp_week_and_month(0.20), False)
+FM.REGISTRY.update(P2R4)
+
+
+# ------------------------------------------------------------------ round 5 (EXPAND)
+def accept_va():
+    """Acceptance: the last 4h close before entry is already beyond prior value in the trade direction."""
+    def f(b, cell, P, od_nat, flip=False):
+        F = build(b)
+        allow, _ = _base(b)
+        lg = _is_long(cell, od_nat, flip)
+        cp = F["close_prev"]
+        m = (cp > F["pVAH"][:, None]) if lg else (cp < F["pVAL"][:, None])
+        return allow, np.nan_to_num(m, nan=False).astype(bool), None
+    return f
+
+
+def open_in_and_va(tol=0.30):
+    a_ = open_va("in")
+    m_ = mp_conf(["pVAH", "pVAL"], tol)
+    def f(b, cell, P, od_nat, flip=False):
+        x1, bo, _ = a_(b, cell, P, od_nat, flip)
+        x2, _, _ = m_(b, cell, P, od_nat, flip)
+        return x1 & x2, bo, None
+    return f
+
+
+def prior_close_quartile():
+    def f(b, cell, P, od_nat, flip=False):
+        allow, bar_ok = _base(b)
+        w = b.weeks
+        pos = (w.pWC - w.pWL) / (w.pWH - w.pWL)
+        lg = _is_long(cell, od_nat, flip)
+        m = (pos >= 0.75) if lg else (pos <= 0.25)
+        return allow & np.isfinite(pos.values) & m.values, bar_ok, None
+    return f
+
+
+def multi_poc(tol=0.25):
+    return mp_conf(["pPOC", "ppPOC"], tol)
+
+
+def pwhl(tol=0.30):
+    def f(b, cell, P, od_nat, flip=False):
+        allow, bar_ok = _base(b)
+        d = _dist(P, [b.weeks["pWH"].values, b.weeks["pWL"].values], b.sigma)
+        return allow & np.isfinite(d) & (d <= tol), bar_ok, None
+    return f
+
+
+P2R5 = {
+    "ACCEPT_VA": (accept_va(), False),
+    "OPENIN_VA30": (open_in_and_va(0.30), False),
+    "PCLOSE_Q": (prior_close_quartile(), False),
+    "POC2W25": (multi_poc(0.25), False),
+    "PWHL30": (pwhl(0.30), False),
+    # REFINE: extent of the profile-confluence region
+    "MPM25": (mp_conf(["mPOC", "mVAH", "mVAL"], 0.25), False),
+    "MPM_VA30": (mp_conf(["mVAH", "mVAL"], 0.30), False),
+    "MP_VAH20": (mp_conf(["pVAH"], 0.20), False),
+    "MP_VAH40": (mp_conf(["pVAH"], 0.40), False),
+}
+FM.REGISTRY.update(P2R5)
+
 if __name__ == "__main__":
     rnd = sys.argv[1]
     if rnd == "p2round1":
         run_round(list(P2R1), "p2round1")
     elif rnd == "p2round2":
         run_round(list(P2R2), "p2round2")
+    elif rnd == "p2round3":
+        run_round(list(P2R3), "p2round3")
+    elif rnd == "p2round4":
+        run_round(list(P2R4), "p2round4")
+    elif rnd == "p2round5":
+        run_round(list(P2R5), "p2round5")

@@ -13,6 +13,8 @@ from deflate import cell_entry_sets, greedy_cluster
 
 
 def main():
+    import families_p2  # noqa: F401  (registers phase 2 variants)
+    from validate_p2 import _entry_sets
     B = load_all()
     files = {"F0": OUT / "screen_F0.parquet"}
     for p in sorted((OUT / "families").glob("screen_*.parquet")):
@@ -28,7 +30,7 @@ def main():
         s["cell"] = s.config.str.split("|").str[:6].str.join("|")
         s["t"] = s.expR / s.sdR * np.sqrt(s.n)
         best = s.groupby("cell").t.max()
-        M, keys = cell_entry_sets(B, None if v == "F0" else v)
+        M, keys = cell_entry_sets(B, None) if v == "F0" else _entry_sets(B, v)
         idx = [i for i, k in enumerate(keys) if k in best.index]
         mats.append(M[idx])
         meta += [(v, keys[i], best[keys[i]]) for i in idx]
