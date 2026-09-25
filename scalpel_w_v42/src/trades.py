@@ -12,7 +12,7 @@ import pandas as pd
 
 from common import COMMISSION_RT, EQUITY, LINEAGE, RISK_FRAC, SPEC, UPPER
 from grid import S_VALS, STYLES, struct_prices
-from sim import BOUNCE, BREAKOUT, _rnd, find_entry, walk
+from sim import BOUNCE, BREAKOUT, _rnd, find_entry, trade_pnl, walk
 
 STYLE_CODE = {v: k for k, v in STYLES.items()}
 
@@ -25,6 +25,11 @@ def parse(cid: str) -> dict:
 
 
 def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0):
+    be_R, so_t = 0.0, 0.0
+    if variant not in (None, "F0"):
+        from families import REGISTRY
+        kw = REGISTRY[variant][2] if len(REGISTRY[variant]) > 2 else {}
+        be_R, so_t = kw.get("be_R", 0.0), kw.get("so_t", 0.0)
     """Trades for one config on every ticker in B. variant = families.REGISTRY entry name or None."""
     c = parse(cid)
     flip, mask_fn = False, None
@@ -61,11 +66,13 @@ def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0):
             if sb < 0 or sb >= n:
                 continue
             Lv, uu = P[w], U[w]
-            eb, epx, etype = find_entry(b.O, b.H, b.L, b.C, n, w, Lv, uu, od, c["side"], c["d"], c["style"],
-                                        c["D"], tick, bar_ok, sb)
+            eb, epx, etype, plan = find_entry(b.O, b.H, b.L, b.C, n, w, Lv, uu, od, c["side"], c["d"], c["style"],
+                                              c["D"], tick, bar_ok, sb)
             if eb < 0:
                 continue
             fill = epx + dirn * slip * tick
+            plan_fill = plan + dirn * slip * tick
+            tref = plan if c["style"] == 0 else epx
             if c["stop"] == "STRUCT":
                 S = S_struct[w]
             else:
@@ -74,7 +81,9 @@ def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0):
             if not np.isfinite(S):
                 continue
             S = _rnd(S, tick, 0)
-            risk = dirn * (fill - S)
+            if dirn * (fill - S) < tick * 0.999:
+                continue
+            risk = dirn * (plan_fill - S)
             if risk < tick * 0.999:
                 continue
             rpc = risk * pv
@@ -88,20 +97,25 @@ def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0):
             elif t == "WO":
                 T = b.wo[w] if c["side"] == BOUNCE else np.nan
             elif t == "HOLD":
-                T = epx + dirn * 1e6 * uu
+                T = tref + dirn * 1e6 * uu
             else:
-                T = epx + dirn * float(t[1:]) * uu
+                T = tref + dirn * float(t[1:]) * uu
             if not np.isfinite(T):
                 continue
             T = _rnd(T, tick, dirn)
             if dirn * (T - epx) < tick:
                 continue
-            xp, xb, xk = walk(b.O, b.H, b.L, b.C, n, w, eb, etype, dirn, S, T, tick, slip)
-            pnl = ncon * (dirn * (xp - fill) * pv - COMMISSION_RT)
+            if be_R > 0 or so_t > 0:
+                TA = _rnd(tref + dirn * so_t * uu, tick, dirn) if so_t > 0 else np.nan
+                pnl, xb, xp, xk = trade_pnl(b.O, b.H, b.L, b.C, n, w, eb, etype, dirn, S, T, tick, slip, fill,
+                                            risk, be_R, TA, ncon, pv, COMMISSION_RT)
+            else:
+                xp, xb, xk = walk(b.O, b.H, b.L, b.C, n, w, eb, etype, dirn, S, T, tick, slip)
+                pnl = ncon * (dirn * (xp - fill) * pv - COMMISSION_RT)
             rows.append(dict(lineage=LINEAGE, ticker=tk, micro=sp["micro"], week=b.weeks.index[w],
                              year=int(b.weeks.index[w].year), entry_time=pd.Timestamp(b.TS[w, eb]),
                              exit_time=pd.Timestamp(b.TS[w, xb]), dir="long" if dirn > 0 else "short",
-                             level_px=Lv, entry_px=fill, stop_px=S, target_px=T if abs(T) < 1e8 else np.nan,
+                             level_px=Lv, planned_px=plan, entry_px=fill, stop_px=S, target_px=T if abs(T) < 1e8 else np.nan,
                              exit_px=xp, exit_kind=["stop", "target", "time"][xk], contracts=ncon,
                              risk_usd=ncon * rpc, pnl_usd=pnl, R=pnl / (ncon * rpc), skipped=""))
     df = pd.DataFrame(rows)

@@ -240,6 +240,68 @@ ROUND2 = {
     "MONTH_REST": (month_week("rest"), False),
 }
 
+def nth_touch(k, reset=0.25):
+    """Entry search starts after the (k-1)th touch-and-reset cycle (k=3 -> third touch)."""
+    def f(b, cell, P, od_nat, flip=False):
+        allow, bar_ok = _base(b)
+        nW, nB = b.O.shape
+        sb = np.full(nW, -1, np.int64)
+        for w in range(nW):
+            p = P[w]
+            if not np.isfinite(p):
+                continue
+            x = reset * b.sigma[w]
+            n = int(b.nb[w])
+            cyc, state, j = 0, 0, 0
+            while j < n and cyc < k - 1:
+                if state == 0 and ((od_nat > 0 and b.H[w, j] > p) or (od_nat < 0 and b.L[w, j] < p)):
+                    state = 1
+                    j += 1
+                    continue
+                if state == 1 and ((od_nat > 0 and b.L[w, j] <= p - x) or (od_nat < 0 and b.H[w, j] >= p + x)):
+                    cyc += 1
+                    state = 0
+                j += 1
+            if cyc == k - 1 and j < n:
+                sb[w] = j
+        return allow, bar_ok, sb
+    return f
+
+
+def prior_touched(mode):
+    from data import weekly_levels
+    def f(b, cell, P, od_nat, flip=False):
+        allow, bar_ok = _base(b)
+        name = cell[0]
+        pl = weekly_levels(b.tk, b.weeks["pWO"].values)[name]
+        hit = (b.weeks["pWH"].values > pl) if od_nat > 0 else (b.weeks["pWL"].values < pl)
+        m = hit if mode == "yes" else ~hit
+        return allow & np.isfinite(pl) & m, bar_ok, None
+    return f
+
+
+def range_week():
+    def f(b, cell, P, od_nat, flip=False):
+        allow, bar_ok = _base(b)
+        opp = b.levels["GP_T_OUT"] if od_nat < 0 else b.levels["GP_B_OUT"]
+        cond = (b.H >= opp[:, None]) if od_nat < 0 else (b.L <= opp[:, None])
+        fb = first_bar(np.nan_to_num(cond, nan=False).astype(bool))
+        return allow, bar_ok, np.where(fb >= 0, fb + 1, -1).astype(np.int64)
+    return f
+
+
+ROUND3 = {
+    "DOW_Wed": (dow([2]), False),
+    "DOW_Thu": (dow([3]), False),
+    "DOW_TueWedThu": (dow([1, 2, 3]), False),
+    "BE05": (hold(), False, dict(be_R=0.5)),
+    "SO05": (hold(), False, dict(so_t=0.5)),
+    "TOUCH3": (nth_touch(3), False),
+    "PRIORTOUCH_yes": (prior_touched("yes"), False),
+    "PRIORTOUCH_no": (prior_touched("no"), False),
+    "RANGE_WEEK": (range_week(), False),
+}
+
 ROUND1 = {
     "TREND10_with": (trend(10, "with"), False),
     "TREND10_counter": (trend(10, "counter"), False),
@@ -262,6 +324,7 @@ ROUND1 = {
 }
 REGISTRY = dict(ROUND1)
 REGISTRY.update(ROUND2)
+REGISTRY.update(ROUND3)
 
 
 def _job(args):
@@ -328,3 +391,5 @@ if __name__ == "__main__":
         run_round(list(ROUND1), "round1")
     elif rnd == "round2":
         run_round(list(ROUND2), "round2")
+    elif rnd == "round3":
+        run_round(list(ROUND3), "round3")

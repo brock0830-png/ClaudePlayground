@@ -59,9 +59,10 @@ def test_reclaim_entry_next_open():
     R, PN, EB, ET, XB = run([[102, 102, 101, 101], [101, 101, 99.4, 99.6], [99.6, 100.4, 99.5, 100.3],
                              [100.5, 101.9, 100.4, 101.8]], style=1, D=1.5)
     assert EB == 3 and ET == 1
-    # target = 100.5 + 1 = 101.5; stop = 99 -> fill 100.75, risk 1.75pt
-    n = int(np.floor(BUDGET / (1.75 * PV)))
+    # target = open 100.5 + 1 = 101.5; stop = 99; fill 100.75; size on the signal close 100.3 (+1 tick)
+    n = int(np.floor(BUDGET / ((100.3 + TICK - 99) * PV)))
     assert abs(PN - n * ((101.5 - 100.75) * PV - COMM)) < 1e-9
+    assert abs(R - PN / (n * (100.3 + TICK - 99) * PV)) < 1e-12
 
 
 def test_reclaim_invalidated_by_max_pierce():
@@ -86,3 +87,34 @@ def test_breakout_stop_entry_and_gap_stop():
     n = int(np.floor(BUDGET / ((fill - 99) * PV)))
     # bar 2 opens 98.0 below the stop 99 -> filled at the open minus slippage
     assert abs(PN - n * ((98.0 - TICK - fill) * PV - COMM)) < 1e-9
+
+
+def test_gap_fill_sized_on_planned_risk():
+    # buy limit at 100 (stop 99) gaps: bar 1 opens at 99.3, fill at the open; size uses the limit
+    R, PN, EB, ET, XB = run([[102, 102.5, 101, 101.5], [99.3, 101.6, 99.2, 101.5], [101.5, 101.6, 101.2, 101.4]])
+    assert EB == 1 and ET == 1
+    n = int(np.floor(BUDGET / ((100 + TICK - 99) * PV)))          # 80, not the ~1000 a 0.55pt risk would give
+    fill = 99.3 + TICK
+    # target from the order price: 100 + 1 = 101, hit in bar 1 (opened below it, high 101.6)
+    assert abs(PN - n * ((101 - fill) * PV - COMM)) < 1e-9
+    assert abs(R - PN / (n * 1.25 * PV)) < 1e-12
+
+
+def test_breakeven_and_scale_out():
+    from sim import simulate as sim2
+    bars = [[102, 102.5, 101, 101.5], [101.5, 101.6, 99.5, 100.5], [100.5, 100.9, 100.4, 100.8],
+            [100.8, 100.85, 99.9, 100.0], [100.0, 100.1, 99.5, 99.6]]
+    b = np.array(bars, float)
+    O, H, L, C = (b[:, i][None, :] for i in range(4))
+    one = lambda v: np.array([v], float)
+    args = (O, H, L, C, np.array([5]), one(100.0), one(1.0), one(102.0), one(np.nan), one(np.nan),
+            np.ones(1, np.bool_), np.ones((1, 5), np.bool_), -1, 0, 0.0, 0, np.inf, S, T, TICK, 1.0, PV, COMM, BUDGET)
+    base = sim2(*args)[1][0, 0, 0]
+    # without BE: time exit at 99.6 - tick
+    assert abs(base - 80 * ((99.6 - TICK - 100.25) * PV - COMM)) < 1e-9
+    # BE at +0.5R: fill 100.25, risk 1.25 -> trigger 100.875; bar 2 high 100.9 arms; bar 3 low 99.9 stops at 100.25
+    be = sim2(*args, None, 0.5, 0.0)[1][0, 0, 0]
+    assert abs(be - 80 * ((100.25 - TICK - 100.25) * PV - COMM)) < 1e-9
+    # scale-out 50% at 0.5 units (target 100.5 from the order price): 40 contracts exit in bar 2
+    so = sim2(*args, None, 0.0, 0.5)[1][0, 0, 0]
+    assert abs(so - (40 * ((100.5 - 100.25) * PV - COMM) + 40 * ((99.6 - TICK - 100.25) * PV - COMM))) < 1e-9

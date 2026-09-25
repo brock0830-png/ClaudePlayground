@@ -12,7 +12,9 @@ Fill model (STEP 3 of the prompt, conservative where the 4h bar hides the path):
   * $4.50 commission per micro contract round turn. Size = floor(budget / risk per contract);
     skip the trade if one micro exceeds the budget.
   * flat at the close of the final bar of the week.
-R is net $ P&L divided by the planned $ risk (contracts x stop distance from the actual fill).
+R is net $ P&L divided by the PLANNED $ risk: contracts x stop distance from the order price (resting
+limit / stop orders) or from the signal bar close (next-open market entries), i.e. what the trader
+knows when sizing. Resting orders set their target from the order price.
 """
 import math
 
@@ -35,8 +37,10 @@ def _rnd(x, tick, mode):
 
 @njit(cache=True)
 def find_entry(O, H, L, C, n, w, Lv, uu, od, side, d, style, D, tick, bar_ok, sb):
-    """Returns (entry_bar, entry_price_before_slippage, entry_type) or (-1, nan, -1).
-    entry_type: 0 = intrabar limit, 1 = at bar open, 2 = intrabar stop entry."""
+    """Returns (entry_bar, entry_price_before_slippage, entry_type, planned_price) or (-1, nan, -1, nan).
+    entry_type: 0 = intrabar limit, 1 = at bar open, 2 = intrabar stop entry.
+    planned_price = the order price for resting limit / stop orders, or the signal bar's close for
+    next-open market entries; position size and order targets are set from it."""
     if side == BOUNCE:
         if style == 0:
             E = _rnd(Lv + od * d * uu, tick, od)            # deeper limit, rounded away from WO
@@ -51,9 +55,9 @@ def find_entry(O, H, L, C, n, w, Lv, uu, od, side, d, style, D, tick, bar_ok, sb
                     gap = O[w, j] <= E
                 if hit:
                     if gap:
-                        return j, O[w, j], 1
-                    return j, E, 0
-            return -1, np.nan, -1
+                        return j, O[w, j], 1, E
+                    return j, E, 0, E
+            return -1, np.nan, -1, np.nan
         thr = Lv + od * max(d * uu, tick)
         i = -1
         for j in range(sb, n):
@@ -61,20 +65,20 @@ def find_entry(O, H, L, C, n, w, Lv, uu, od, side, d, style, D, tick, bar_ok, sb
                 i = j
                 break
         if i < 0:
-            return -1, np.nan, -1
+            return -1, np.nan, -1, np.nan
         Dlim = Lv + od * D * uu
         k = style - 1          # style 1 = no time limit (k huge), 2..4 -> k = 1..3
         for j in range(i, n):
             ext = H[w, j] if od > 0 else L[w, j]
             if od * (ext - Dlim) > 0:
-                return -1, np.nan, -1                      # pierced deeper than D: invalid
+                return -1, np.nan, -1, np.nan              # pierced deeper than D: invalid
             if style >= 2 and j - i > k:
-                return -1, np.nan, -1                      # reclaim too late
+                return -1, np.nan, -1, np.nan              # reclaim too late
             if od * (Lv - C[w, j]) > 0:                    # closed back on the WO side
                 if j + 1 < n and bar_ok[w, j + 1]:
-                    return j + 1, O[w, j + 1], 1
-                return -1, np.nan, -1
-        return -1, np.nan, -1
+                    return j + 1, O[w, j + 1], 1, C[w, j]
+                return -1, np.nan, -1, np.nan
+        return -1, np.nan, -1, np.nan
     # ---------------- breakout
     if style == 0:
         E = _rnd(Lv + od * max(d * uu, tick), tick, od)
@@ -89,26 +93,26 @@ def find_entry(O, H, L, C, n, w, Lv, uu, od, side, d, style, D, tick, bar_ok, sb
                 gap = O[w, j] <= E
             if hit:
                 if gap:
-                    return j, O[w, j], 1
-                return j, E, 2
-        return -1, np.nan, -1
+                    return j, O[w, j], 1, E
+                return j, E, 2, E
+        return -1, np.nan, -1, np.nan
     i = -1
     for j in range(sb, n):
         if (od > 0 and H[w, j] > Lv) or (od < 0 and L[w, j] < Lv):
             i = j
             break
     if i < 0:
-        return -1, np.nan, -1
+        return -1, np.nan, -1, np.nan
     thr = Lv + od * d * uu
     k = style - 1
     for j in range(i, n):
         if style >= 2 and j - i > k:
-            return -1, np.nan, -1
+            return -1, np.nan, -1, np.nan
         if od * (C[w, j] - thr) > 0:
             if j + 1 < n and bar_ok[w, j + 1]:
-                return j + 1, O[w, j + 1], 1
-            return -1, np.nan, -1
-    return -1, np.nan, -1
+                return j + 1, O[w, j + 1], 1, C[w, j]
+            return -1, np.nan, -1, np.nan
+    return -1, np.nan, -1, np.nan
 
 
 @njit(cache=True)
@@ -137,8 +141,69 @@ def walk(O, H, L, C, n, w, eb, etype, dirn, S, T, tick, slip):
 
 
 @njit(cache=True)
+def walk_be(O, H, L, C, n, w, eb, etype, dirn, S, T, tick, slip, fill, trig):
+    """walk() with a breakeven stop: once a bar reaches `trig` (in the entry bar only a CLOSE beyond it
+    counts for intrabar fills), the stop moves to the fill price from the NEXT bar on."""
+    armed = False
+    for j in range(eb, n):
+        if dirn > 0:
+            sh = L[w, j] <= S
+            th = H[w, j] >= T + tick
+        else:
+            sh = H[w, j] >= S
+            th = L[w, j] <= T - tick
+        if j == eb and etype == 0:
+            th = dirn * (C[w, j] - T) >= tick
+        if sh:
+            px = S
+            if (j > eb or etype == 1) and dirn * (O[w, j] - S) <= 0:
+                px = O[w, j]
+            return px - dirn * slip * tick, j, 0
+        if th:
+            px = T
+            if (j > eb or etype == 1) and dirn * (O[w, j] - T) >= 0:
+                px = O[w, j]
+            return px, j, 1
+        if not armed:
+            if j == eb and etype != 1:
+                hit = dirn * (C[w, j] - trig) >= 0
+            else:
+                hit = (H[w, j] >= trig) if dirn > 0 else (L[w, j] <= trig)
+            if hit:
+                armed = True
+                S = fill
+    return C[w, n - 1] - dirn * slip * tick, n - 1, 2
+
+
+@njit(cache=True)
+def trade_pnl(O, H, L, C, n, w, eb, etype, dirn, S, T, tick, slip, fill, risk_px, be_R, TA, ncon, pv, comm):
+    """Net $ P&L of one trade with optional breakeven (be_R > 0) and optional 50% scale-out at TA
+    (finite TA closer than T). Returns (pnl, last_exit_bar, final_exit_px, final_kind)."""
+    n1 = 0
+    if np.isfinite(TA) and dirn * (T - TA) > 0 and ncon >= 2:
+        n1 = ncon // 2
+    n2 = ncon - n1
+    trig = fill + dirn * be_R * risk_px
+    if be_R > 0:
+        xp, xb, xk = walk_be(O, H, L, C, n, w, eb, etype, dirn, S, T, tick, slip, fill, trig)
+    else:
+        xp, xb, xk = walk(O, H, L, C, n, w, eb, etype, dirn, S, T, tick, slip)
+    pnl = n2 * (dirn * (xp - fill) * pv - comm)
+    if n1 > 0:
+        if be_R > 0:
+            xa, xba, xka = walk_be(O, H, L, C, n, w, eb, etype, dirn, S, TA, tick, slip, fill, trig)
+        else:
+            xa, xba, xka = walk(O, H, L, C, n, w, eb, etype, dirn, S, TA, tick, slip)
+        pnl += n1 * (dirn * (xa - fill) * pv - comm)
+        if xba > xb:
+            xb = xba
+    return pnl, xb, xp, xk
+
+
+@njit(cache=True)
 def simulate(O, H, L, C, nb, P, U, WO, S_struct, T_next, allow, bar_ok,
-             od, side, d, style, D, s_vals, t_vals, tick, slip, pv, comm, budget, SB=None):
+             od, side, d, style, D, s_vals, t_vals, tick, slip, pv, comm, budget, SB=None,
+             be_R=0.0, so_t=0.0):
     """All stop x target combos for one entry definition.
     Stops: s_vals (in units U) then STRUCT. Targets: t_vals (units, from entry) then NEXT, WO.
     Returns R[w, nS, nT], PNL[w, nS, nT] (nan = no trade), entry bar, entry type, exit bar."""
@@ -162,12 +227,14 @@ def simulate(O, H, L, C, nb, P, U, WO, S_struct, T_next, allow, bar_ok,
         sb = 0 if SB is None else SB[w]
         if sb < 0 or sb >= n:
             continue
-        eb, epx, etype = find_entry(O, H, L, C, n, w, Lv, uu, od, side, d, style, D, tick, bar_ok, sb)
+        eb, epx, etype, plan = find_entry(O, H, L, C, n, w, Lv, uu, od, side, d, style, D, tick, bar_ok, sb)
         if eb < 0:
             continue
         EB[w] = eb
         ET[w] = etype
         fill = epx + dirn * slip * tick
+        plan_fill = plan + dirn * slip * tick
+        tref = plan if style == 0 else epx          # resting orders: bracket set from the order price
         for si in range(nS):
             if si < nS - 1:
                 s = s_vals[si]
@@ -180,16 +247,18 @@ def simulate(O, H, L, C, nb, P, U, WO, S_struct, T_next, allow, bar_ok,
             if not np.isfinite(S):
                 continue
             S = _rnd(S, tick, 0)
-            risk = dirn * (fill - S)
+            if dirn * (fill - S) < tick * 0.999:
+                continue                          # filled at or through the stop: no trade
+            risk = dirn * (plan_fill - S)
             if risk < tick * 0.999:
-                continue                          # stop at or through the fill: no trade
-            rpc = risk * pv
+                continue                          # planned stop at or through the order: no trade
+            rpc = risk * pv                        # size on PLANNED risk (set when the order is placed)
             ncon = math.floor(budget / rpc + 1e-9)
             if ncon < 1:
                 continue
             for ti in range(nT):
                 if ti < nT - 2:
-                    T = epx + dirn * t_vals[ti] * uu
+                    T = tref + dirn * t_vals[ti] * uu
                 elif ti == nT - 2:
                     T = T_next[w]
                 else:
@@ -199,8 +268,13 @@ def simulate(O, H, L, C, nb, P, U, WO, S_struct, T_next, allow, bar_ok,
                 T = _rnd(T, tick, dirn)
                 if dirn * (T - epx) < tick:
                     continue                      # target already reached at entry: no trade
-                xp, xb, xk = walk(O, H, L, C, n, w, eb, etype, dirn, S, T, tick, slip)
-                pnl = ncon * (dirn * (xp - fill) * pv - comm)
+                if be_R > 0 or so_t > 0:
+                    TA = _rnd(tref + dirn * so_t * uu, tick, dirn) if so_t > 0 else np.nan
+                    pnl, xb, xp, xk = trade_pnl(O, H, L, C, n, w, eb, etype, dirn, S, T, tick, slip, fill,
+                                                risk, be_R, TA, ncon, pv, comm)
+                else:
+                    xp, xb, xk = walk(O, H, L, C, n, w, eb, etype, dirn, S, T, tick, slip)
+                    pnl = ncon * (dirn * (xp - fill) * pv - comm)
                 R[w, si, ti] = pnl / (ncon * rpc)
                 PNL[w, si, ti] = pnl
                 XB[w, si, ti] = xb

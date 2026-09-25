@@ -34,7 +34,7 @@ def entries_only(O, H, L, C, nb, P, U, allow, bar_ok, od, side, d, style, D, tic
         sb = SB[w]
         if sb < 0 or sb >= n:
             continue
-        eb, epx, et = find_entry(O, H, L, C, n, w, P[w], U[w], od, side, d, style, D, tick, bar_ok, sb)
+        eb, epx, et, pl = find_entry(O, H, L, C, n, w, P[w], U[w], od, side, d, style, D, tick, bar_ok, sb)
         out[w] = eb >= 0
     return out
 

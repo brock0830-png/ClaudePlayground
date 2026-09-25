@@ -105,7 +105,8 @@ def metrics_block(Rg, Pg, years=None):
 
 
 def run_grid(B=None, family="F0_pierce_grid", cell_list=None, slip=1.0, scale=1.0, shift=0.0,
-             masks=None, tag=None, keep_bits=True, verbose=True, flip=False, t_vals=None, t_names=None):
+             masks=None, tag=None, keep_bits=True, verbose=True, flip=False, t_vals=None, t_names=None,
+             be_R=0.0, so_t=0.0):
     """Sweep cells. masks: optional fn(b, cell) -> (allow, bar_ok) for filter families."""
     B = B or load_all()
     allw, gmap = global_weeks(B)
@@ -142,7 +143,7 @@ def run_grid(B=None, family="F0_pierce_grid", cell_list=None, slip=1.0, scale=1.
             try:
                 R, PN, EB, ET, XB = simulate(b.O, b.H, b.L, b.C, b.nb, P, U, b.wo, S_struct, T_next,
                                              allow, bar_ok, od, side, d, style, D, S_VALS, tv,
-                                             sp["tick"], slip, sp["pv"], COMMISSION_RT, budget, SB)
+                                             sp["tick"], slip, sp["pv"], COMMISSION_RT, budget, SB, be_R, so_t)
                 status = "done"
             except Exception as e:  # pragma: no cover
                 status = f"error:{e}"

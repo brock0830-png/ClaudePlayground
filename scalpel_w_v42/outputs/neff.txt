@@ -1,0 +1,1 @@
+3317 clusters of 33779 eligible entry sets (1646665 eligible configs)

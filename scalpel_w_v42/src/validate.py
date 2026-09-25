@@ -9,9 +9,13 @@ Finalist selection (frozen before any 2021+ data is read):
      variant, on the real levels.
   2. Score = in-sample t-statistic of net R per trade (mean / sd * sqrt(n)), pooled over tickers.
   3. Cluster the pool by entry-set overlap (Jaccard of (ticker, week) entries > 0.7), greedy by score.
-  4. Finalists = the best-scoring member of each of the 8 best clusters, plus the best-scoring
-     configuration of each archive lead (WTL1 bounce; RB_TOP long bounce under DM40_lt; WRL bounce)
-     when not already present. Archive leads that fail the screen are carried and flagged.
+  4. Finalists, three tiers:
+     A (level-specific): best member of each of the 6 best clusters drawn from F0 and from the
+       EXPAND variants that passed the family screen (real levels beat their placebo searches);
+     B (archive leads): best-scoring configuration of WTL1 bounce (F0), RB_TOP long bounce under
+       DM40_lt, WRL bounce (F0); carried and flagged if it fails the screen;
+     C (generic check): best member of each of the 4 best clusters of the whole pool not already
+       represented.
 Gates (all required to call a finalist EV+):
   G1 OOS pooled: expectancy > 0 in R and $, PF >= 1.20, n >= 100
   G2 LOTO: the rule re-selected without ticker k is net positive on ticker k (IS) for >= 3 of 4
@@ -36,7 +40,7 @@ from common import LINEAGE, OOS_START, OUT, ROOT, SEAL_FILE, TICKERS
 from screen import neighbours, keyof
 
 FAM = OUT / "families"
-K_CLUSTERS = 8
+K_A, K_C = 6, 4
 ARCHIVE = [
     ("F0", dict(level="WTL1", side="bounce"), "ARCHIVE WTL1 bounce (57.7% WR, PF 1.80)"),
     ("DM40_lt", dict(level="RB_TOP", side="bounce"), "ARCHIVE W RB Top long + momentum filter DM<0.40 (67 SPY trades, PF 1.54)"),
@@ -101,32 +105,49 @@ def freeze():
     Mc = M[pool.set_idx.values]
     cid = greedy_cluster(Mc, pool.score.values, 0.7)
     pool["cluster"] = cid
-    reps = pool.sort_values("score", ascending=False).groupby("cluster").head(1)
-    reps = reps.sort_values("score", ascending=False)
-    fin = reps.head(K_CLUSTERS).copy()
-    fin["why"] = [f"top cluster #{i + 1} by IS t-stat" for i in range(len(fin))]
+    fs = family_screens()
+    passing = set(fs.loc[fs.family_pass, "variant"]) if len(fs) else set()
+    tierA_pool = pool[pool.variant.isin({"F0"} | passing)]
+    repsA = tierA_pool.sort_values("score", ascending=False).groupby("cluster").head(1)
+    finA = repsA.sort_values("score", ascending=False).head(K_A).copy()
+    finA["why"] = [f"A: level-specific pool (F0 + {', '.join(sorted(passing)) or 'none'}), cluster rank {i + 1}"
+                   for i in range(len(finA))]
+    finA["tier"] = "A"
+    reps = pool.sort_values("score", ascending=False).groupby("cluster").head(1).sort_values("score", ascending=False)
+    reps = reps[~reps.cluster.isin(finA.cluster)]
+    finC = reps.head(K_C).copy()
+    finC["why"] = [f"C: whole pool, next-best cluster {i + 1}" for i in range(len(finC))]
+    finC["tier"] = "C"
+    fin = finA
     # archive leads
     extra = []
     for v, flt, why in ARCHIVE:
         p = variants().get(v)
         if p is None:
             continue
-        s = pd.read_parquet(p)
-        s = s[(s.level == flt["level"]) & (s.side == flt["side"]) & (s.n >= 100)].copy()
-        if "sdR" not in s:
+        s0 = pd.read_parquet(p)
+        s0 = s0[(s0.level == flt["level"]) & (s0.side == flt["side"])]
+        s = s0[s0.n >= 100].copy()
+        note = ""
+        if len(s) == 0:
+            s = s0[s0.n >= 30].copy()
+            note = " [no config reaches 100 IS trades; best with >= 30 carried]"
+        if len(s) == 0 or "sdR" not in s:
+            print("archive lead not testable:", why)
             continue
         s["score"] = s.expR / s.sdR * np.sqrt(s.n)
         s["variant"] = v
         best_pass = s[s.screen_pass].sort_values("score", ascending=False).head(1)
         best = best_pass if len(best_pass) else s.sort_values("score", ascending=False).head(1)
         best = best.copy()
-        best["why"] = why + ("" if len(best_pass) else " [fails IS screen, carried as lead]")
+        best["why"] = "B: " + why + ("" if len(best_pass) else " [fails IS screen, carried as lead]") + note
+        best["tier"] = "B"
         if not ((fin.config == best.config.iloc[0]) & (fin.variant == v)).any():
             extra.append(best)
-    if extra:
-        fin = pd.concat([fin] + extra, ignore_index=True)
+    fin = pd.concat([fin] + extra + [finC], ignore_index=True)
+    fin = fin.drop_duplicates(subset=["variant", "config"])
     fin["finalist"] = [f"F{i + 1:02d}" for i in range(len(fin))]
-    cols = ["finalist", "variant", "config", "why", "n", "wr", "pf", "expR", "sdR", "score", "exp_usd",
+    cols = ["finalist", "tier", "variant", "config", "why", "n", "wr", "pf", "expR", "sdR", "score", "exp_usd",
             "maxdd_usd", "expR_ES", "expR_NQ", "expR_CL", "expR_6J", "n_ES", "n_NQ", "n_CL", "n_6J", "screen_pass"]
     fin = fin[[c for c in cols if c in fin.columns]]
     fin.insert(0, "lineage", LINEAGE)
@@ -138,7 +159,7 @@ def freeze():
            f"Frozen {datetime.now(timezone.utc).isoformat()} from in-sample data only (weeks before {OOS_START}).",
            f"finalists.csv sha256 `{h}`", "",
            f"Pool: {len(pool)} screen-passing configs across {pool.variant.nunique()} variants, "
-           f"{n_clusters} entry-overlap clusters.", "",
+           f"{n_clusters} entry-overlap clusters. Family-screen passes: {', '.join(sorted(passing)) or 'none'}.", "",
            "| id | variant | config | why | IS n | IS PF | IS expR | t-stat |", "|---|---|---|---|---|---|---|---|"]
     for r in fin.itertuples():
         txt.append(f"| {r.finalist} | {r.variant} | `{r.config}` | {r.why} | {r.n} | {r.pf:.2f} | {r.expR:.3f} | {r.score:.2f} |")
