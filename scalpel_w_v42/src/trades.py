@@ -25,12 +25,12 @@ def parse(cid: str) -> dict:
 
 
 def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0):
-    be_R, so_t = 0.0, 0.0
+    """Trades for one config on every ticker in B. variant = families.REGISTRY entry name or None."""
+    be_R, so_t, tnext_fn = 0.0, 0.0, None
     if variant not in (None, "F0"):
         from families import REGISTRY
         kw = REGISTRY[variant][2] if len(REGISTRY[variant]) > 2 else {}
-        be_R, so_t = kw.get("be_R", 0.0), kw.get("so_t", 0.0)
-    """Trades for one config on every ticker in B. variant = families.REGISTRY entry name or None."""
+        be_R, so_t, tnext_fn = kw.get("be_R", 0.0), kw.get("so_t", 0.0), kw.get("tnext_fn")
     c = parse(cid)
     flip, mask_fn = False, None
     if variant and variant not in ("F0", None):
@@ -51,6 +51,8 @@ def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0):
         U = b.atr if c["unit"] == "ATR" else b.sigma
         sside = (BREAKOUT if c["side"] == BOUNCE else BOUNCE) if flip else c["side"]
         S_struct, T_next = struct_prices(b, c["level"], sside, scale, shift)
+        if tnext_fn is not None:
+            T_next = tnext_fn(b, (c["level"], c["side"], c["unit"], c["d"], c["style"], c["D"]), P)
         allow = np.ones(len(b.wo), np.bool_)
         bar_ok = np.ones(b.O.shape, np.bool_)
         SB = None

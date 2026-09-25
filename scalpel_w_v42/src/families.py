@@ -331,11 +331,12 @@ def _job(args):
     name, sh = args
     ent = REGISTRY[name]
     fn, flip = ent[0], ent[1]
-    kw = ent[2] if len(ent) > 2 else {}
+    kw = dict(ent[2]) if len(ent) > 2 else {}
+    cell_fn = kw.pop("cells", cells)
     B = _book()
     t0 = time.time()
     masks = (lambda b, cell, P, od: fn(b, cell, P, od, flip)) if flip else (lambda b, cell, P, od: fn(b, cell, P, od))
-    res, _, cov = run_grid(B, family=f"X_{name}", cell_list=cells(), shift=sh, masks=masks,
+    res, _, cov = run_grid(B, family=f"X_{name}", cell_list=cell_fn(), shift=sh, masks=masks,
                            keep_bits=False, verbose=False, flip=flip, **kw)
     s = screen(res)
     tag = f"{name}{'' if sh == 0 else f'_shift{sh:+.2f}'}"

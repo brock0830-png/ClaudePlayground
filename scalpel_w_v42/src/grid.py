@@ -106,8 +106,10 @@ def metrics_block(Rg, Pg, years=None):
 
 def run_grid(B=None, family="F0_pierce_grid", cell_list=None, slip=1.0, scale=1.0, shift=0.0,
              masks=None, tag=None, keep_bits=True, verbose=True, flip=False, t_vals=None, t_names=None,
-             be_R=0.0, so_t=0.0):
-    """Sweep cells. masks: optional fn(b, cell) -> (allow, bar_ok) for filter families."""
+             be_R=0.0, so_t=0.0, price_fn=None, od_fn=None, struct_fn=None, tnext_fn=None):
+    """Sweep cells. masks: optional fn(b, cell, P, od) -> (allow, bar_ok, SB) for filter families.
+    Hooks (phase 2): price_fn(b, name, scale, shift) -> level prices; od_fn(name) -> +1 / -1;
+    struct_fn(b, name, side, scale, shift) -> (S_struct, T_next); tnext_fn(b, cell, P) -> T_next."""
     B = B or load_all()
     allw, gmap = global_weeks(B)
     nG = len(allw)
@@ -120,12 +122,12 @@ def run_grid(B=None, family="F0_pierce_grid", cell_list=None, slip=1.0, scale=1.
     tnames = TGT_NAMES if t_names is None else list(t_names) + ["NEXT", "WO"]
     for ci, cell in enumerate(cl):
         name, side, unit, d, style, D = cell
-        od_nat = 1 if name in UPPER else -1
+        od_nat = od_fn(name) if od_fn else (1 if name in UPPER else -1)
         od = -od_nat if flip else od_nat
         per_tk = {}
         for tk, b in B.items():
             sp = SPEC[tk]
-            lv = b.level_matrix(scale)[name]
+            lv = price_fn(b, name, scale, 0.0) if price_fn else b.level_matrix(scale)[name]
             P = lv if shift == 0.0 else b.wo + (lv - b.wo) + od_nat * shift * b.sigma
             if shift != 0.0:
                 P = np.where(od_nat * (P - b.wo) / b.sigma < 0.05, np.nan, P)   # placebo on/over WO: dropped
@@ -133,8 +135,10 @@ def run_grid(B=None, family="F0_pierce_grid", cell_list=None, slip=1.0, scale=1.
             sside = (BREAKOUT if side == BOUNCE else BOUNCE) if flip else side
             key = (tk, name, sside, scale, shift)
             if key not in struct_cache:
-                struct_cache[key] = struct_prices(b, name, sside, scale, shift)
+                struct_cache[key] = (struct_fn or struct_prices)(b, name, sside, scale, shift)
             S_struct, T_next = struct_cache[key]
+            if tnext_fn is not None:
+                T_next = tnext_fn(b, cell, P)
             SB = None
             if masks is None:
                 allow, bar_ok = ticker_arrays(b)

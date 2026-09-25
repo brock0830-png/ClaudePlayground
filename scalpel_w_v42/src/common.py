@@ -50,6 +50,7 @@ SPEC = {
     "NQ": dict(micro="MNQ", tick=0.25, tick_usd=0.50, pv=2.0),
     "CL": dict(micro="MCL", tick=0.01, tick_usd=1.00, pv=100.0),
     "6J": dict(micro="MJY", tick=0.000001, tick_usd=1.25, pv=1_250_000.0),
+    "GC": dict(micro="MGC", tick=0.10, tick_usd=1.00, pv=10.0),       # sealed holdout (phase 2)
 }
 COMMISSION_RT = 4.50          # $ per contract per round turn
 EQUITY = 100_000.0            # notional account for sizing (non-compounding)

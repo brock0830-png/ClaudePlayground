@@ -19,8 +19,18 @@ from common import (DATA, IS_END, LK_BIAS, LK_VOL, M_BIAS, M_MULT, M_VOL, SEAL_F
 MAXB = 32  # max 4h bars per week (30 in practice)
 
 
+GC_SEAL = DATA.parent / "GC_UNSEALED"
+HOLDOUT = {"GC": DATA / "sealed" / "GC_240_tv_mcp.csv"}   # never read before GC_UNSEALED exists
+
+
 def read_bars(tk: str) -> pd.DataFrame:
-    df = pd.read_csv(DATA / f"{tk}_240.csv", usecols=["time", "open", "high", "low", "close"])
+    if tk in HOLDOUT:
+        if not GC_SEAL.exists():
+            raise PermissionError(f"{tk} is a sealed holdout ticker (GC_UNSEALED absent)")
+        path = HOLDOUT[tk]
+    else:
+        path = DATA / f"{tk}_240.csv"
+    df = pd.read_csv(path, usecols=["time", "open", "high", "low", "close"])
     ts = pd.to_datetime(df["time"], utc=True)
     et = ts.dt.tz_convert("America/New_York")
     shifted = (et + pd.Timedelta(hours=6)).dt.tz_localize(None)   # Sun 18:00 ET -> Mon 00:00
@@ -102,7 +112,9 @@ class Book:
     """Per-ticker weekly panel: padded bar arrays [n_weeks, MAXB] plus a week table."""
 
     def __init__(self, tk: str, oos: bool = False, full: bool = False):
-        if (oos or full) and not SEAL_FILE.exists():
+        if tk in HOLDOUT:
+            full = True                       # holdout ticker: every week is out-of-sample
+        elif (oos or full) and not SEAL_FILE.exists():
             raise PermissionError("2021+ data is sealed until rules are frozen (OOS_UNSEALED absent)")
         self.tk = tk
         bars = read_bars(tk)
@@ -155,6 +167,8 @@ class Book:
         wk = wk.iloc[1:] if wk.index[0] == bars["week"].iloc[0] else wk
         wk = wk[wk["atr"].notna()]
         self.weeks = wk
+        self.bars = bars
+        self.daily = d
         # ---- padded arrays
         nW = len(wk)
         O = np.full((nW, MAXB), np.nan); H = O.copy(); Lo = O.copy(); C = O.copy()
