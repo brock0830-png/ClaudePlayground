@@ -186,7 +186,7 @@ def p2_trades(B, cid, variant, **kw):
     return config_trades(B, cid, variant=variant, **kw)
 
 
-def mp_trades(B, cid, shift=0.0, scale=1.0, slip=1.0):
+def mp_trades(B, cid, shift=0.0, scale=1.0, slip=1.0, min_one=False):
     """Trade reconstruction for MPALONE configs (profile levels as levels)."""
     import math
     from common import COMMISSION_RT, EQUITY, RISK_FRAC, SPEC
@@ -224,6 +224,8 @@ def mp_trades(B, cid, shift=0.0, scale=1.0, slip=1.0):
                 continue
             rpc = dirn * (pf_ - S) * pv
             ncon = math.floor(budget / rpc + 1e-9)
+            if ncon < 1 and min_one:
+                ncon = 1
             if ncon < 1:
                 continue
             tref = plan if c["style"] == 0 else epx
@@ -291,7 +293,7 @@ def loto():
 
 # ------------------------------------------------------------------ one-shot evaluation
 def evaluate():
-    if GC_SEAL.exists():
+    if GC_SEAL.exists() and not ("--rerun-after-crash" in sys.argv and not (OUT / "validation_p2_holdouts.csv").exists()):
         raise SystemExit("phase 2 holdouts already evaluated once")
     import families_p2  # noqa: F401
     from data import Book, load_all
@@ -299,14 +301,15 @@ def evaluate():
     fin = pd.read_csv(ROOT / "finalists_p2.csv")
     h = hashlib.sha256((ROOT / "finalists_p2.csv").read_bytes()).hexdigest()
     stamp = json.dumps(dict(opened_utc=datetime.now(timezone.utc).isoformat(), finalists_p2_sha256=h)) + "\n"
-    SECOND_LOOK.write_text(stamp)
-    GC_SEAL.write_text(stamp)
+    if not GC_SEAL.exists():
+        SECOND_LOOK.write_text(stamp)
+        GC_SEAL.write_text(stamp)
     B = load_all(full=True)
     G = {"GC": Book("GC")}
     oos0 = pd.Timestamp(OOS_START)
     runs = {"base": {}, "slip2": dict(slip=2.0), "x0.95": dict(scale=0.95), "x1.05": dict(scale=1.05),
             "plc-0.30": dict(shift=-0.30), "plc-0.15": dict(shift=-0.15), "plc+0.15": dict(shift=0.15),
-            "plc+0.30": dict(shift=0.30)}
+            "plc+0.30": dict(shift=0.30), "base_min1": dict(min_one=True)}
     rows, tl = [], []
     for f in fin.itertuples():
         for rn, kw in runs.items():

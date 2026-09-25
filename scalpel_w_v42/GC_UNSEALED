@@ -1,0 +1,7 @@
+{"opened_utc": "2026-09-25T15:52:41.656510+00:00", "finalists_p2_sha256": "8de2a66e2583cf7e51b2ce84f7756c76dc4410970dd498f0ea9b4425b686ca7e"}
+NOTE 2026-09-25: the first evaluate run crashed (KeyError 'entry_time' in trade reconstruction when every
+trade of a set is skipped by the $500 budget rule) before writing or printing any result. Fixed the
+empty-frame handling only (no rule, gate or selection change) and re-ran once. Declared before the re-run:
+a secondary, clearly labelled row "base_min1" (at least one micro even when its risk exceeds $500, R
+measured on actual risk) is added as an edge check because MGC / MNQ risk per micro often exceeds $500;
+G8 and all gates keep their frozen definitions.

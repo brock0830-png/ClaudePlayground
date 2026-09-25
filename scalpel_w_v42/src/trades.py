@@ -24,7 +24,7 @@ def parse(cid: str) -> dict:
                 D=float(D[1:]) if D != "Dinf" else np.inf, stop=stop, target=tgt)
 
 
-def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0):
+def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0, min_one=False):
     """Trades for one config on every ticker in B. variant = families.REGISTRY entry name or None."""
     be_R, so_t, tnext_fn = 0.0, 0.0, None
     if variant not in (None, "F0"):
@@ -90,6 +90,8 @@ def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0):
                 continue
             rpc = risk * pv
             ncon = math.floor(budget / rpc + 1e-9)
+            if ncon < 1 and min_one:
+                ncon = 1
             if ncon < 1:
                 rows.append(dict(ticker=tk, week=b.weeks.index[w], skipped="budget"))
                 continue
@@ -122,7 +124,10 @@ def config_trades(B, cid, variant=None, shift=0.0, scale=1.0, slip=1.0):
                              risk_usd=ncon * rpc, pnl_usd=pnl, R=pnl / (ncon * rpc), skipped=""))
     df = pd.DataFrame(rows)
     if len(df):
-        df = df[df.skipped == ""].drop(columns=["skipped"]).sort_values("entry_time").reset_index(drop=True)
+        df = df[df.skipped == ""].drop(columns=["skipped"])
+        if "entry_time" not in df.columns or len(df) == 0:
+            return pd.DataFrame()
+        df = df.sort_values("entry_time").reset_index(drop=True)
     return df
 
 
