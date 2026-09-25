@@ -1,6 +1,7 @@
 # SCALPEL-W-v42: can the weekly TrueALGO / Doc's Scalpel v42 levels be traded for an edge?
 
-Answer: **no strategy survived.** See [REPORT.md](REPORT.md). Across 9.0M configurations
+Answer: **no strategy survived.** See [REPORT.md](REPORT.md), and [REPORT_P2.md](REPORT_P2.md) for phase 2
+(context filters and market profile; the one lead, P13, is a pure market-profile rule). Across 9.0M configurations
 (pierce grid + 39 filter variants) on ES, NQ, CL and 6J, the real levels did no better than the
 same levels shifted 0.15-0.30 sigma. The 12 finalists, frozen in [FREEZE.md](FREEZE.md), each
 failed at least one gate when 2021-2026 was opened once.

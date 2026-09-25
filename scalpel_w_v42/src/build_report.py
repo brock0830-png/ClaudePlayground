@@ -53,7 +53,7 @@ def main():
     real = pw.loc["REAL"]
     plc = pw.loc[[i for i in pw.index if "shift" in i]]
     canary = (OUT / "canary.txt").read_text()
-    neff_txt = (OUT / "neff.txt").read_text().strip()
+    neff_txt = (OUT / "neff_p1.txt").read_text().strip()   # phase 1 value (neff.txt now covers both phases)
     cov = pd.read_csv(ROOT / "coverage_summary.csv")
     n_var = len(cov)
     f03, f05, f04 = (g.set_index("finalist").loc[k] for k in ("F03", "F05", "F04"))
@@ -64,6 +64,9 @@ def main():
     pos = g[g.OOS_expR > 0]
     n_long = int(real.pass_long)
     md = f"""# REPORT - {LINEAGE}
+
+> **Phase 2** (context filters: trend regime, prior-week market profile, RSI divergence, S/R, stacked
+> evidence; sealed GC holdout) is in [REPORT_P2.md](REPORT_P2.md).
 
 Status tags: **[NEW]** = computed in this study; **[ARCHIVE]** = quoted from earlier work, not
 re-verified; **[RECONSTRUCTION]** = this study's rebuild of an archive idea or of the native levels.

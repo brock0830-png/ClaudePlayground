@@ -41,7 +41,7 @@ def main():
                 e[c] = e[c].round(4)
         e.insert(0, "lineage", LINEAGE)
         rmap = {}
-        for p in sorted(FAM.glob("round*_summary.csv")):
+        for p in sorted(FAM.glob("*round*_summary.csv")):
             for v in pd.read_csv(p).variant:
                 rmap[v] = p.stem.split("_")[0]
         e["round"] = e.variant.map(rmap)

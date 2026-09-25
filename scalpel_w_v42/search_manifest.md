@@ -52,3 +52,13 @@ placebo-level searches on both screen-pass count and top-10 mean expectancy.
 Stop when every manifest cell is covered and two consecutive EXPAND rounds yield no family that
 passes the family screen. STATUS: met after round 3 (rounds 2 and 3 empty; 40 variants x 16,992
 ticker-cells done, 0 errors, 0 pending). Finalists frozen in FREEZE.md; 2021+ opened once.
+
+## Phase 2 (context / confluence / market profile)
+Features (src/features.py, no look-ahead): daily SMA50/200 regime, strong bull/bear, 52-week drawdown;
+prior-week / two-weeks-back / 4-week composite / prior-month TPO profile from 4h bars (POC, 70% value area,
+TPO density); developing weekly POC; 4h and daily RSI(14) divergence; prior-day high/low, daily swing
+pivots, prior-week high/low. 64 variants in 5 rounds (ideas_queue.md), each = the full F0 grid under the
+filter on real + 4 placebo level sets; MPALONE trades the prior-week POC / VAH / VAL themselves (1,416 cells).
+Coverage 104 families, 0 errors, 0 pending. Stop rule met after round P2-5.
+Holdouts: 2021+ = second look (opened in phase 1); GC 4h 2023-07..2026-09 sealed in data/sealed until
+GC_UNSEALED. Finalists: FREEZE_P2.md; gates G1-G8 in src/validate_p2.py / src/finalize_p2.py.
