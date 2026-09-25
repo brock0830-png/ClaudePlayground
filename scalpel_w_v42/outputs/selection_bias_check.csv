@@ -1,0 +1,6 @@
+lineage,direction,share,n
+SCALPEL-W-v42,real passers beat mean of their 4 placebos,0.9779310344827586,725
+SCALPEL-W-v42,placebo-0.30 passers beat their real-level twin,0.8313253012048193,498
+SCALPEL-W-v42,placebo-0.15 passers beat their real-level twin,0.87940234791889,937
+SCALPEL-W-v42,placebo+0.15 passers beat their real-level twin,0.9696969696969697,990
+SCALPEL-W-v42,placebo+0.30 passers beat their real-level twin,0.9563492063492064,756

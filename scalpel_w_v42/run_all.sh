@@ -10,4 +10,8 @@ python3 placebo_compare.py
 python3 families.py round1
 python3 families.py round2
 python3 families.py round3
+python3 export.py
+python3 neff.py
 echo PIPELINE_DONE
+# One-shot, NOT part of the pipeline: python3 validate.py freeze / loto / unseal, then finalize.py,
+# summary_chart.py, build_report.py. unseal refuses to run twice (OOS_UNSEALED).

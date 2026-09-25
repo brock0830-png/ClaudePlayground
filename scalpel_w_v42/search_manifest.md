@@ -32,10 +32,14 @@ WRL, RB_TOP, WTL1, WTL2, RB_BOT (neighbours closer than 0.10 sigma skipped).
 * 2 ticks slippage
 
 ## EXPAND families (each = full F0 grid under a filter, real + 4 placebo shifts)
-See `ideas_queue.md` for status and results. Round 1: TREND10 (with / counter), DM40 (prior-week
-|move| < / >= 0.40 sigma, the archive "DM < 0.40" analogue), session RTH / ON, day of week
-(Mon-Tue, Wed-Thu, Fri), VOL regime (ATR/sigma vs trailing 52w median), GAP against / with,
+See `ideas_queue.md` for definitions, results and status. 39 variants in 3 rounds:
+Round 1: TREND10 (with / counter), DM40 (prior-week |move| < / >= 0.40 sigma, the archive "DM < 0.40"
+analogue), session RTH / ON, day of week (Mon-Tue, Wed-Thu, Fri), VOL regime, GAP against / with,
 WO crossed first, second touch, monthly confluence / none, retest of a broken level.
+Round 2: HOLD (no target), first-bar direction, prior-week box close, early / late week, prior-week
+high / low confluence, first week of month.
+Round 3: REFINE around DOW_WedThu (Wed, Thu, Tue-Thu), breakeven at +0.5R, 50% scale-out at 0.5
+units, third touch, prior week touched the level, range week.
 
 ## Screens
 Config screen (screen.py): pooled n >= 100, net expectancy > 0, PF >= 1.3; tickers with >= 30
@@ -46,4 +50,5 @@ placebo-level searches on both screen-pass count and top-10 mean expectancy.
 
 ## Stop rule
 Stop when every manifest cell is covered and two consecutive EXPAND rounds yield no family that
-passes the family screen.
+passes the family screen. STATUS: met after round 3 (rounds 2 and 3 empty; 40 variants x 16,992
+ticker-cells done, 0 errors, 0 pending). Finalists frozen in FREEZE.md; 2021+ opened once.
