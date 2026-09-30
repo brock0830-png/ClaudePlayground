@@ -5,3 +5,5 @@ data/raw/*.csv
 data/raw/*.parquet
 data/cache/
 *.bin
+scalpel_bt/data/es_levels_CME_MINI_ES1_240.csv
+scalpel_bt/data/cache/

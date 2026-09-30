@@ -1,0 +1,97 @@
+//@version=5
+// Doc's Scalpel EXPORT (ES/MES) — companion to v37. Plots EVERY daily, weekly and
+// monthly level on every bar (Data Window only, chart stays clean) so
+// "Export chart data" writes the full history. 57 plots (limit 64). Math and ES
+// parameters copied verbatim from docs_scalpel_v37.pine.
+indicator("Doc's Scalpel EXPORT - ES", overlay=true)
+
+gp_o = 0.618
+gp_i = 0.650
+dw = display.data_window
+
+do_val = request.security(syminfo.tickerid, "D", open, lookahead=barmerge.lookahead_on)
+wo_val = request.security(syminfo.tickerid, "W", open, lookahead=barmerge.lookahead_on)
+mo_val = request.security(syminfo.tickerid, "M", open, lookahead=barmerge.lookahead_on)
+
+// returns [gbt, th2, th1, gbb, rh, rl, rbt, tl1, tl2, rbb, gpto, gpti, gpbo, gpbi, rthi, rtlo, rbhi, rblo]
+f_lv(po, vol, bias, n, rh_m, th1_m, th2_m, gbt_m, rl_m, tl1_m, tl2_m, rbb_m, in_t, in_b, rh_t, rh_b) =>
+    s   = po * (vol / 100.0) / math.sqrt(n)
+    ts  = s * (bias / 0.5)
+    bs  = s * ((1.0 - bias) / 0.5)
+    gbb = po + ts * in_t
+    rbt = po - bs * in_b
+    rh  = po + ts * rh_m
+    rl  = po - bs * rl_m
+    inr = gbb - rbt
+    [po + ts * gbt_m, po + ts * th2_m, po + ts * th1_m, gbb, rh, rl, rbt,
+     po - bs * tl1_m, po - bs * tl2_m, po - bs * rbb_m,
+     rbt + inr * gp_o, rbt + inr * gp_i, rbt + inr * (1 - gp_o), rbt + inr * (1 - gp_i),
+     rh + s * rh_t, rh - s * rh_t, rl + s * rh_b, rl - s * rh_b]
+
+[dgbt, dth2, dth1, dgbb, drh, drl, drbt, dtl1, dtl2, drbb, dgpto, dgpti, dgpbo, dgpbi, drthi, drtlo, drbhi, drblo] =
+     f_lv(do_val, 18.54, 0.481, 252.0, 0.624, 1.248, 1.562, 1.819, 0.530, 1.224, 1.515, 1.796, 1.098, 1.053, 0.084, 0.096)
+[wgbt, wth2, wth1, wgbb, wrh, wrl, wrbt, wtl1, wtl2, wrbb, wgpto, wgpti, wgpbo, wgpbi, wrthi, wrtlo, wrbhi, wrblo] =
+     f_lv(wo_val, 18.54, 0.481, 52.0, 0.550, 1.202, 1.654, 1.826, 0.551, 1.171, 1.638, 1.704, 1.0, 1.0, 0.078, 0.078)
+[mgbt, mth2, mth1, mgbb, mrh, mrl, mrbt, mtl1, mtl2, mrbb, mgpto, mgpti, mgpbo, mgpbi, mrthi, mrtlo, mrbhi, mrblo] =
+     f_lv(mo_val, 17.37, 0.531, 12.0, 0.511, 1.013, 1.197, 1.217, 0.491, 1.127, 1.539, 1.598, 1.0, 1.0, 0.138, 0.078)
+
+// ── DAILY (19)
+plot(do_val, "DO", display=dw)
+plot(dgbt, "D GB Top", display=dw)
+plot(dth2, "DTH2", display=dw)
+plot(dth1, "DTH1", display=dw)
+plot(dgbb, "D GB Bot", display=dw)
+plot(drh, "DRH", display=dw)
+plot(drl, "DRL", display=dw)
+plot(drbt, "D RB Top", display=dw)
+plot(dtl1, "DTL1", display=dw)
+plot(dtl2, "DTL2", display=dw)
+plot(drbb, "D RB Bot", display=dw)
+plot(dgpto, "D GP T Out", display=dw)
+plot(dgpti, "D GP T In", display=dw)
+plot(dgpbo, "D GP B Out", display=dw)
+plot(dgpbi, "D GP B In", display=dw)
+plot(drthi, "D Rng T Hi", display=dw)
+plot(drtlo, "D Rng T Lo", display=dw)
+plot(drbhi, "D Rng B Hi", display=dw)
+plot(drblo, "D Rng B Lo", display=dw)
+// ── WEEKLY (19)
+plot(wo_val, "WO", display=dw)
+plot(wgbt, "W GB Top", display=dw)
+plot(wth2, "WTH2", display=dw)
+plot(wth1, "WTH1", display=dw)
+plot(wgbb, "W GB Bot", display=dw)
+plot(wrh, "WRH", display=dw)
+plot(wrl, "WRL", display=dw)
+plot(wrbt, "W RB Top", display=dw)
+plot(wtl1, "WTL1", display=dw)
+plot(wtl2, "WTL2", display=dw)
+plot(wrbb, "W RB Bot", display=dw)
+plot(wgpto, "W GP T Out", display=dw)
+plot(wgpti, "W GP T In", display=dw)
+plot(wgpbo, "W GP B Out", display=dw)
+plot(wgpbi, "W GP B In", display=dw)
+plot(wrthi, "W Rng T Hi", display=dw)
+plot(wrtlo, "W Rng T Lo", display=dw)
+plot(wrbhi, "W Rng B Hi", display=dw)
+plot(wrblo, "W Rng B Lo", display=dw)
+// ── MONTHLY (19)
+plot(mo_val, "MO", display=dw)
+plot(mgbt, "M GB Top", display=dw)
+plot(mth2, "MTH2", display=dw)
+plot(mth1, "MTH1", display=dw)
+plot(mgbb, "M GB Bot", display=dw)
+plot(mrh, "MRH", display=dw)
+plot(mrl, "MRL", display=dw)
+plot(mrbt, "M RB Top", display=dw)
+plot(mtl1, "MTL1", display=dw)
+plot(mtl2, "MTL2", display=dw)
+plot(mrbb, "M RB Bot", display=dw)
+plot(mgpto, "M GP T Out", display=dw)
+plot(mgpti, "M GP T In", display=dw)
+plot(mgpbo, "M GP B Out", display=dw)
+plot(mgpbi, "M GP B In", display=dw)
+plot(mrthi, "M Rng T Hi", display=dw)
+plot(mrtlo, "M Rng T Lo", display=dw)
+plot(mrbhi, "M Rng B Hi", display=dw)
+plot(mrblo, "M Rng B Lo", display=dw)
