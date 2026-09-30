@@ -50,8 +50,11 @@ def price(F, K, T, atm, cp, flat=False):
     return b76(F, K, T, v, cp)
 
 
+MIN_SPREAD = 0.25
+
+
 def spread_cost(mid):
-    return 0.25 * np.maximum(0.25, 0.05 * mid)
+    return 0.25 * np.maximum(MIN_SPREAD, 0.05 * mid)
 
 
 def strike_for_delta(F, T, atm, cp, delta, flat=False):

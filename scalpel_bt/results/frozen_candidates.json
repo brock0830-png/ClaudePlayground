@@ -1,0 +1,192 @@
+[
+ {
+  "name": "C1_bounce_W_GPBIN_touch",
+  "variant_id": 11928,
+  "dev_all_gates": true,
+  "spec": {
+   "tf": "W",
+   "roll": "incl",
+   "pend": true,
+   "max_bars": 0,
+   "family": "bounce_Awin",
+   "side": "long",
+   "level": "GP_B_IN",
+   "trig": "touch",
+   "stop": [
+    "sig",
+    0.25
+   ],
+   "target": [
+    "R",
+    1.0
+   ],
+   "mode": "scaled",
+   "filters": {
+    "vix": "below_mean"
+   },
+   "stage": "B"
+  },
+  "robustness": {
+   "twin_fixed": {
+    "tf": "W",
+    "roll": "incl",
+    "pend": true,
+    "max_bars": 0,
+    "family": "bounce_Awin",
+    "side": "long",
+    "level": "GP_B_IN",
+    "trig": "touch",
+    "stop": [
+     "sig",
+     0.25
+    ],
+    "target": [
+     "R",
+     1.0
+    ],
+    "mode": "fixed",
+    "filters": {
+     "vix": "below_mean"
+    },
+    "stage": "B"
+   },
+   "roll_excl": {
+    "tf": "W",
+    "roll": "excl",
+    "pend": true,
+    "max_bars": 0,
+    "family": "bounce_Awin",
+    "side": "long",
+    "level": "GP_B_IN",
+    "trig": "touch",
+    "stop": [
+     "sig",
+     0.25
+    ],
+    "target": [
+     "R",
+     1.0
+    ],
+    "mode": "scaled",
+    "filters": {
+     "vix": "below_mean"
+    },
+    "stage": "B"
+   },
+   "no_filter": {
+    "tf": "W",
+    "roll": "incl",
+    "pend": true,
+    "max_bars": 0,
+    "family": "bounce_Awin",
+    "side": "long",
+    "level": "GP_B_IN",
+    "trig": "touch",
+    "stop": [
+     "sig",
+     0.25
+    ],
+    "target": [
+     "R",
+     1.0
+    ],
+    "mode": "scaled",
+    "filters": {},
+    "stage": "B"
+   }
+  }
+ },
+ {
+  "name": "C2_break_W_GPTIN",
+  "variant_id": 11847,
+  "dev_all_gates": true,
+  "spec": {
+   "tf": "W",
+   "roll": "excl",
+   "pend": true,
+   "max_bars": 0,
+   "family": "break_Awin",
+   "side": "long",
+   "level": "GP_T_IN",
+   "trig": "break",
+   "stop": [
+    "sig",
+    0.25
+   ],
+   "target": [
+    "none"
+   ],
+   "mode": "fixed",
+   "filters": {
+    "trend": "up20"
+   },
+   "stage": "B"
+  },
+  "robustness": {
+   "twin_scaled": {
+    "tf": "W",
+    "roll": "excl",
+    "pend": true,
+    "max_bars": 0,
+    "family": "break_Awin",
+    "side": "long",
+    "level": "GP_T_IN",
+    "trig": "break",
+    "stop": [
+     "sig",
+     0.25
+    ],
+    "target": [
+     "none"
+    ],
+    "mode": "scaled",
+    "filters": {
+     "trend": "up20"
+    },
+    "stage": "B"
+   },
+   "roll_incl": {
+    "tf": "W",
+    "roll": "incl",
+    "pend": true,
+    "max_bars": 0,
+    "family": "break_Awin",
+    "side": "long",
+    "level": "GP_T_IN",
+    "trig": "break",
+    "stop": [
+     "sig",
+     0.25
+    ],
+    "target": [
+     "none"
+    ],
+    "mode": "fixed",
+    "filters": {
+     "trend": "up20"
+    },
+    "stage": "B"
+   },
+   "no_filter": {
+    "tf": "W",
+    "roll": "excl",
+    "pend": true,
+    "max_bars": 0,
+    "family": "break_Awin",
+    "side": "long",
+    "level": "GP_T_IN",
+    "trig": "break",
+    "stop": [
+     "sig",
+     0.25
+    ],
+    "target": [
+     "none"
+    ],
+    "mode": "fixed",
+    "filters": {},
+    "stage": "B"
+   }
+  }
+ }
+]

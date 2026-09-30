@@ -223,8 +223,14 @@ def row_for(name, tf, mode, roll, flat, manage, desc, t, extra):
     return r
 
 
+SENS = "--sens" in sys.argv   # sensitivity: ATM IV = VIX9D, SPX-style 0.10 minimum spread, weekly only
+
+
 def main():
     rows_out = []
+    if SENS:
+        op.ATM_RATIO = 1.0
+        op.MIN_SPREAD = 0.10
     W_STRUCT = {
         "put_TL1_TL2": [(-1, "TL1", "TL2")], "put_TL2_RBBOT": [(-1, "TL2", "RB_BOT")],
         "put_RBTOP_TL2": [(-1, "RB_TOP", "TL2")], "put_RL_RBTOP": [(-1, "RL", "RB_TOP")],
@@ -241,12 +247,17 @@ def main():
         "ic_RL_RH": [(-1, "RL", "TL1"), (1, "RH", "TH1")],
     }
     jobs = []
-    for mode, roll, flat, manage in itertools.product(["fixed", "scaled"], ["incl", "excl"], [False, True], ["hold", "touch"]):
-        for nm, lg in W_STRUCT.items():
-            jobs.append(("opt_weekly", "W", mode, roll, flat, manage, nm, lg))
-    for mode, flat in itertools.product(["fixed", "scaled", "ewma_rs"], [False, True]):
-        for nm, lg in D_STRUCT.items():
-            jobs.append(("opt_0dte", "D", mode, "incl", flat, "hold", nm, lg))
+    if SENS:
+        for mode in ["fixed", "scaled"]:
+            for nm, lg in W_STRUCT.items():
+                jobs.append(("opt_weekly_sens", "W", mode, "incl", False, "hold", nm, lg))
+    else:
+        for mode, roll, flat, manage in itertools.product(["fixed", "scaled"], ["incl", "excl"], [False, True], ["hold", "touch"]):
+            for nm, lg in W_STRUCT.items():
+                jobs.append(("opt_weekly", "W", mode, roll, flat, manage, nm, lg))
+        for mode, flat in itertools.product(["fixed", "scaled", "ewma_rs"], [False, True]):
+            for nm, lg in D_STRUCT.items():
+                jobs.append(("opt_0dte", "D", mode, "incl", flat, "hold", nm, lg))
     ent_cache = {}
     for fam, tf, mode, roll, flat, manage, nm, lg in jobs:
         key = (tf, mode, roll)
@@ -273,7 +284,7 @@ def main():
     # legging
     for mode, roll, flat, (nm, legs_map) in itertools.product(
             ["fixed", "scaled"], ["incl", "excl"], [False, True],
-            [("leg_RL_RH_TL1TL2_TH1TH2", {"put": ("TL1", "TL2"), "call": ("TH1", "TH2")}),
+            [] if SENS else [("leg_RL_RH_TL1TL2_TH1TH2", {"put": ("TL1", "TL2"), "call": ("TH1", "TH2")}),
              ("leg_RBTOP_GBBOT_TL2RBB_TH2GBT", {"put": ("TL2", "RB_BOT"), "call": ("TH2", "GB_TOP")})]):
         trig = {"put": "RL", "call": "RH"} if nm.startswith("leg_RL") else {"put": "RB_TOP", "call": "GB_BOT"}
         tr = legging_trades(mode, roll, trig, legs_map, flat)
@@ -288,6 +299,9 @@ def main():
             extra = dict(dm_delta=json.dumps(dd), dm_ev=float(b1["net"].mean()), dm_evR=float(b1["R"].mean()), dm_n=len(b1))
         rows_out.append(row_for("opt_legging", "W", mode, roll, flat, "hold", nm, t, extra))
         print("legging", mode, roll, flat, nm, len(t), round(rows_out[-1].get("ev", np.nan), 3), round(extra.get("dm_ev", np.nan), 3), flush=True)
+    if SENS:
+        for r in rows_out:
+            r["filters"] = json.dumps({"skew": "skew", "atm_ratio": 1.0, "min_spread": 0.10})
     screen.append_log(rows_out, path=screen.RESULTS / "log_options_pending.csv")
 
 
