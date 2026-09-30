@@ -1,0 +1,55 @@
+[
+ {
+  "name": "P2A_meanrev_IBS_VIX",
+  "variant_id": 440,
+  "family": "F2_meanrev",
+  "spec": {
+   "family": "F2_meanrev",
+   "kind": "entry_exit",
+   "entry": [
+    "ibs<0.3"
+   ],
+   "exit": "hold5",
+   "filters": [
+    "vix>20"
+   ],
+   "side": "long",
+   "max_hold": 10
+  }
+ },
+ {
+  "name": "P2B_overnight_below_MA50",
+  "variant_id": 7,
+  "family": "F1_session",
+  "spec": {
+   "family": "F1_session",
+   "name": "ON_18_10",
+   "kind": "session",
+   "hours": [
+    18,
+    22,
+    2,
+    6
+   ],
+   "filters": [
+    "close<ma50"
+   ],
+   "side": "long"
+  }
+ },
+ {
+  "name": "P2C_VIX_spike_hold10",
+  "variant_id": 615,
+  "family": "F4_vol",
+  "spec": {
+   "family": "F4_vol",
+   "kind": "entry_exit",
+   "entry": [
+    "vix_x_ma10>1.2"
+   ],
+   "exit": "hold10",
+   "filters": [],
+   "side": "long"
+  }
+ }
+]
