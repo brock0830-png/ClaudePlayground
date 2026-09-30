@@ -1,0 +1,25 @@
+{
+ "oos_bars": 10402,
+ "es_buy_hold_pts_switch_adjusted": 3783.8,
+ "drift_pts_per_4h_bar": 0.3637569698134974,
+ "candidates": [
+  {
+   "name": "C1_bounce_W_GPBIN_touch",
+   "oos_ev_pts": 3.673756227914498,
+   "avg_bars_held": 5.980392156862745,
+   "random_entry_mean_ev": 1.461762254901961,
+   "random_entry_p90_ev": 6.145343137254901,
+   "pct_rank_vs_random_entry": 70.89999999999999,
+   "drift_expectation_pts": 1.5754093292767983
+  },
+  {
+   "name": "C2_break_W_GPTIN",
+   "oos_ev_pts": 5.189012616379753,
+   "avg_bars_held": 11.730337078651685,
+   "random_entry_mean_ev": 4.324932584269663,
+   "random_entry_p90_ev": 9.29269662921348,
+   "pct_rank_vs_random_entry": 57.4,
+   "drift_expectation_pts": 3.6669918706212505
+  }
+ ]
+}
