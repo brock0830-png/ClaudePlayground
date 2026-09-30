@@ -1,7 +1,12 @@
 # Scalpel levels backtest
 
 Can Chris's Scalpel (TrueALGO-clone) D/W/M levels drive an EV+ ES/SPX system on data it has never seen?
-**Answer: no edge found.** Start with `results/oos_report.md` (verdict), then `results/screen_summary.md`.
+**Phase 1 answer (Scalpel levels): no edge found.** Start with `results/oos_report.md`, then `results/screen_summary.md`.
+
+**Phase 2 (directional ES rules from price and VIX, no options):** one rule held up out of sample. Buy ES when a
+session closes in the bottom 30% of its range while VIX closes above 20, hold 5 sessions. OOS 2020-2026:
+111 trades, +29.9 pt/trade (95% CI +4.6..+55.1), every year positive, beat randomly timed long exposure (96th pct).
+Protocol verdict: paper trade it (it does not clear the deflated-Sharpe bar). See `results/p2/oos_report.md`.
 
 | File | What |
 |---|---|
@@ -23,6 +28,9 @@ Reproduce (Python 3.11):
     python scripts/summarize_log.py              # gate counts and rankings
     python scripts/dev_candidates.py             # DEV pages for the frozen candidates
     python scripts/run_oos.py                    # one-shot OOS; needs results/OOS_UNLOCKED = freeze commit
+
+Phase 2: `PROTOCOL_P2.md`, `scripts/p2_screen.py` (640 DEV variants), `results/p2/` (log, frozen rules, OOS report),
+`python scripts/p2_candidates.py dev|oos` (OOS needs `results/p2/OOS_UNLOCKED` = Phase 2 freeze commit).
 
 `scripts/detect_rolls.py` (re-dates contract switches) and `scripts/audit_stopfirst.py` (checks stop-first
 fills against SPX 1-minute bars) need the public SPX 1-minute file from HuggingFace
