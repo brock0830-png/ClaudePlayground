@@ -1,0 +1,49 @@
+[
+ {
+  "name": "P3A_stack3_IBS_VIX",
+  "group": "A",
+  "variant_id": 179,
+  "spec": {
+   "entry": [
+    "ibs<0.3",
+    "vix>20"
+   ],
+   "hold": 5,
+   "max_concurrent": 3
+  }
+ },
+ {
+  "name": "P3B_oversold_score90",
+  "group": "B",
+  "variant_id": 250,
+  "spec": {
+   "entry": [
+    "os_score>0.9"
+   ],
+   "hold": 5
+  }
+ },
+ {
+  "name": "P3C_momentum126",
+  "group": "C",
+  "variant_id": 255,
+  "spec": {
+   "kind": "target",
+   "regime": [
+    "mom126>zero"
+   ]
+  }
+ },
+ {
+  "name": "P2A_reference",
+  "group": "reference",
+  "variant_id": 5,
+  "spec": {
+   "entry": [
+    "ibs<0.3",
+    "vix>20"
+   ],
+   "hold": 5
+  }
+ }
+]
