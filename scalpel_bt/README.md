@@ -3,6 +3,15 @@
 Can Chris's Scalpel (TrueALGO-clone) D/W/M levels drive an EV+ ES/SPX system on data it has never seen?
 **Phase 1 answer (Scalpel levels): no edge found.** Start with `results/oos_report.md`, then `results/screen_summary.md`.
 
+**Start here: `results/SYSTEM.md`**, a one-page rundown of the system that survived every test, and
+`pine/README.md` for the TradingView indicators that draw its trades.
+
+**Phase 3 (variations + a different validation):** targets, stops, holding periods, trend, volume and composite
+scores were tested on 27 years of development data (SPY 1994-2012 + ES 2013-2019). Then the frozen picks and the
+unchanged P2A were tested once on seven untouched markets (QQQ, IWM, DIA, EFA, EWG, EWJ, EWU; 1997-2026).
+**P2A confirmed:** 2,739 trades, +0.54% per trade, profit factor 1.46, positive in all 7 markets and every decade.
+See `results/p3/test_report.md`.
+
 **Phase 2 (directional ES rules from price and VIX, no options):** one rule held up out of sample. Buy ES when a
 session closes in the bottom 30% of its range while VIX closes above 20, hold 5 sessions. OOS 2020-2026:
 111 trades, +29.9 pt/trade (95% CI +4.6..+55.1), every year positive, beat randomly timed long exposure (96th pct).
@@ -28,6 +37,10 @@ Reproduce (Python 3.11):
     python scripts/summarize_log.py              # gate counts and rankings
     python scripts/dev_candidates.py             # DEV pages for the frozen candidates
     python scripts/run_oos.py                    # one-shot OOS; needs results/OOS_UNLOCKED = freeze commit
+
+Phase 3: `PROTOCOL_P3.md`, `scripts/p3_screen.py` (258 development variants), `scripts/p3_test.py` (one-shot
+test, locked to the freeze commit), `results/p3/`. Pine logic checks: `scripts/pine_replica.py`,
+`scripts/pine_replica_levels.py`.
 
 Phase 2: `PROTOCOL_P2.md`, `scripts/p2_screen.py` (640 DEV variants), `results/p2/` (log, frozen rules, OOS report),
 `python scripts/p2_candidates.py dev|oos` (OOS needs `results/p2/OOS_UNLOCKED` = Phase 2 freeze commit).

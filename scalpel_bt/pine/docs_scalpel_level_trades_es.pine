@@ -1,0 +1,239 @@
+//@version=5
+// Doc's Scalpel LEVEL TRADES - ES/MES
+// Altered from docs_scalpel_export_es.pine: the same level math (f_lv, ES parameters copied verbatim from
+// docs_scalpel_v37.pine), but instead of 57 data-window plots it draws the two Phase 1 weekly-level systems
+// whose out-of-sample profit factor was > 1, and highlights their trades.
+// Research verdict (results/oos_report.md): both made money 2020-2026 (PF 1.24 / 1.28) but NOT more than the
+// same rules on randomly shifted levels, i.e. no evidence the level itself is the edge. Shown for study only.
+//
+// Use on CME_MINI:ES1! (or MES1!), 4-hour chart (any intraday timeframe works; the research used 4h bars).
+//  C1  weekly GP B In touch, SCALED vol (vol = 252-day mean of VIX as of the week's start), only when the prior
+//      VIX close is below its 252-day mean. Touch -> buy next bar open; stop = level - 0.25 sigma;
+//      target = 1R; else exit at the week's last close. Positions closed before the expiration-week roll.
+//  C2  weekly GP T In close-through, FIXED vol (18.54), only when the prior session closed above its 20-day SMA,
+//      no expiration (roll) weeks. Close above -> buy next bar open; stop = level - 0.25 sigma; exit at the
+//      week's last close.
+indicator("Doc's Scalpel Level Trades - ES", shorttitle="ScalpelTrades", overlay=true, max_labels_count=500,
+     max_boxes_count=500)
+
+gp_o = 0.618
+gp_i = 0.650
+
+// returns [gbt, th2, th1, gbb, rh, rl, rbt, tl1, tl2, rbb, gpto, gpti, gpbo, gpbi, rthi, rtlo, rbhi, rblo]
+f_lv(po, vol, bias, n, rh_m, th1_m, th2_m, gbt_m, rl_m, tl1_m, tl2_m, rbb_m, in_t, in_b, rh_t, rh_b) =>
+    s   = po * (vol / 100.0) / math.sqrt(n)
+    ts  = s * (bias / 0.5)
+    bs  = s * ((1.0 - bias) / 0.5)
+    gbb = po + ts * in_t
+    rbt = po - bs * in_b
+    rh  = po + ts * rh_m
+    rl  = po - bs * rl_m
+    inr = gbb - rbt
+    [po + ts * gbt_m, po + ts * th2_m, po + ts * th1_m, gbb, rh, rl, rbt,
+     po - bs * tl1_m, po - bs * tl2_m, po - bs * rbb_m,
+     rbt + inr * gp_o, rbt + inr * gp_i, rbt + inr * (1 - gp_o), rbt + inr * (1 - gp_i),
+     rh + s * rh_t, rh - s * rh_t, rl + s * rh_b, rl - s * rh_b]
+
+// ---------------------------------------------------------------- inputs
+showC1 = input.bool(true, "C1  weekly GP B In touch (scaled vol, VIX below 1y mean)")
+showC2 = input.bool(true, "C2  weekly GP T In close-through (fixed vol, uptrend, no roll weeks)")
+showLv = input.bool(true, "Plot the entry levels and stops")
+showLabels = input.bool(true, "Exit labels with P&L (points)")
+showTable = input.bool(true, "Stats table")
+costPts = input.float(0.60, "Round-trip cost per contract (points)", step=0.05)
+vixSym = input.symbol("CBOE:VIX", "VIX symbol")
+cC1 = color.teal
+cC2 = color.orange
+
+// ---------------------------------------------------------------- data
+wo = request.security(syminfo.tickerid, "W", open, lookahead=barmerge.lookahead_on)
+[pClose, pSma20] = request.security(syminfo.tickerid, "D", [close[1], ta.sma(close, 20)[1]], lookahead=barmerge.lookahead_on)
+[vixNow, vixM252Now] = request.security(vixSym, "D", [close, ta.sma(close, 252)])
+
+newWeek = ta.change(time("W")) != 0
+newSess = ta.change(time("D")) != 0
+dNY = dayofweek(time, "America/New_York")
+lastBarOfWeek = dayofweek(time_close, "America/New_York") == dayofweek.friday and hour(time_close, "America/New_York") == 17
+// TradingView switches ES1! to the next contract in the expiration week (3rd Friday of Mar/Jun/Sep/Dec),
+// usually at the Monday 18:00 ET session start: C1 goes flat at Monday's 17:00 close in that week.
+preRollBar = dayofweek(time_close, "America/New_York") == dayofweek.monday and hour(time_close, "America/New_York") == 17
+
+var float vixMWeek = na
+var bool rollWk = false
+var float vixSess = na
+var float vixMSess = na
+if newWeek
+    vixMWeek := vixM252Now[1]
+    tFri = time + (dayofweek.friday - dNY) * 86400000
+    mFri = month(tFri, "America/New_York")
+    dFri = dayofmonth(tFri, "America/New_York")
+    rollWk := (mFri == 3 or mFri == 6 or mFri == 9 or mFri == 12) and dFri >= 15 and dFri <= 21
+if newSess
+    vixSess := vixNow[1]
+    vixMSess := vixM252Now[1]
+
+sig1 = wo * (vixMWeek / 100.0) / math.sqrt(52.0)
+sig2 = wo * (18.54 / 100.0) / math.sqrt(52.0)
+[a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, gpbi1, a15, a16, a17, a18] = f_lv(wo, vixMWeek, 0.481, 52.0, 0.550, 1.202, 1.654, 1.826, 0.551, 1.171, 1.638, 1.704, 1.0, 1.0, 0.078, 0.078)
+[b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, gpti2, b13, b14, b15, b16, b17, b18] = f_lv(wo, 18.54, 0.481, 52.0, 0.550, 1.202, 1.654, 1.826, 0.551, 1.171, 1.638, 1.704, 1.0, 1.0, 0.078, 0.078)
+L1 = gpbi1
+S1 = L1 - 0.25 * sig1
+L2 = gpti2
+S2 = L2 - 0.25 * sig2
+
+// ---------------------------------------------------------------- helpers
+f_rec(array<float> st, float pnl) =>
+    array.set(st, 0, array.get(st, 0) + 1)
+    array.set(st, 1, array.get(st, 1) + (pnl > 0 ? 1 : 0))
+    array.set(st, 2, array.get(st, 2) + math.max(pnl, 0))
+    array.set(st, 3, array.get(st, 3) + math.max(-pnl, 0))
+    array.set(st, 4, array.get(st, 4) + pnl)
+    true
+
+f_close(int x1, float p1, int x2, float p2, color col, string tag, string why) =>
+    pnl = p2 - p1 - costPts
+    box.new(left=x1, top=math.max(p1, p2), right=x2, bottom=math.min(p1, p2), border_color=col,
+         bgcolor=color.new(pnl > 0 ? color.green : color.red, 80))
+    if showLabels
+        label.new(x2, math.max(p1, p2), tag + " " + why + " " + (pnl >= 0 ? "+" : "") + str.tostring(pnl, "#.0"),
+             style=label.style_label_down, color=color.new(col, 15), textcolor=color.white, size=size.tiny)
+    pnl
+
+var st1 = array.from(0.0, 0.0, 0.0, 0.0, 0.0)
+var st2 = array.from(0.0, 0.0, 0.0, 0.0, 0.0)
+
+// ---------------------------------------------------------------- C1: GP B In touch
+var bool in1 = false
+var bool pend1 = false
+var bool done1 = false
+var float px1 = na
+var float stop1 = na
+var float tgt1 = na
+var float pStop1 = na
+var int bar1 = na
+bool entry1 = false
+if showC1 and timeframe.isintraday
+    if newWeek
+        if in1
+            f_rec(st1, f_close(bar1, px1, bar_index - 1, close[1], cC1, "C1", "wk"))
+            in1 := false
+        pend1 := false
+        done1 := false
+    if pend1
+        pend1 := false
+        fill = open
+        tg = fill + (fill - pStop1)
+        if fill > pStop1
+            in1 := true
+            px1 := fill
+            stop1 := pStop1
+            tgt1 := tg
+            bar1 := bar_index
+            entry1 := true
+            if low <= stop1
+                f_rec(st1, f_close(bar1, px1, bar_index, math.min(stop1, open), cC1, "C1", "stop"))
+                in1 := false
+            else if high >= tgt1
+                f_rec(st1, f_close(bar1, px1, bar_index, tgt1, cC1, "C1", "tgt"))
+                in1 := false
+    else if in1
+        if low <= stop1
+            f_rec(st1, f_close(bar1, px1, bar_index, math.min(stop1, open), cC1, "C1", "stop"))
+            in1 := false
+        else if high >= tgt1
+            f_rec(st1, f_close(bar1, px1, bar_index, math.max(tgt1, open), cC1, "C1", "tgt"))
+            in1 := false
+    elig1 = vixSess < vixMSess and not na(L1)
+    if not in1 and not pend1 and not done1 and elig1 and low <= L1
+        done1 := true
+        if close > S1 and not lastBarOfWeek and not (rollWk and preRollBar)
+            pend1 := true
+            pStop1 := S1
+    if in1 and (lastBarOfWeek or (rollWk and preRollBar))
+        f_rec(st1, f_close(bar1, px1, bar_index, close, cC1, "C1", lastBarOfWeek ? "wk" : "roll"))
+        in1 := false
+
+// ---------------------------------------------------------------- C2: GP T In close-through
+var bool in2 = false
+var bool pend2 = false
+var bool done2 = false
+var bool below2 = false
+var float px2 = na
+var float stop2 = na
+var float pStop2 = na
+var int bar2 = na
+bool entry2 = false
+if showC2 and timeframe.isintraday
+    if newWeek
+        if in2
+            f_rec(st2, f_close(bar2, px2, bar_index - 1, close[1], cC2, "C2", "wk"))
+            in2 := false
+        pend2 := false
+        done2 := false
+        below2 := false
+    if pend2
+        pend2 := false
+        fill = open
+        if fill > pStop2
+            in2 := true
+            px2 := fill
+            stop2 := pStop2
+            bar2 := bar_index
+            entry2 := true
+            if low <= stop2
+                f_rec(st2, f_close(bar2, px2, bar_index, math.min(stop2, open), cC2, "C2", "stop"))
+                in2 := false
+    else if in2
+        if low <= stop2
+            f_rec(st2, f_close(bar2, px2, bar_index, math.min(stop2, open), cC2, "C2", "stop"))
+            in2 := false
+    elig2 = not rollWk and pClose > pSma20
+    if not in2 and not pend2 and not done2 and elig2
+        if close <= L2
+            below2 := true
+        else if below2 or open < L2
+            done2 := true
+            if close > S2 and not lastBarOfWeek
+                pend2 := true
+                pStop2 := S2
+    else if close <= L2
+        below2 := true
+    if in2 and lastBarOfWeek
+        f_rec(st2, f_close(bar2, px2, bar_index, close, cC2, "C2", "wk"))
+        in2 := false
+
+// ---------------------------------------------------------------- visuals
+plot(showLv and showC1 ? L1 : na, "C1 level (W GP B In, scaled)", color=cC1, style=plot.style_linebr)
+plot(showLv and showC1 ? S1 : na, "C1 stop", color=color.new(cC1, 55), style=plot.style_linebr)
+plot(showLv and showC2 ? L2 : na, "C2 level (W GP T In, fixed)", color=cC2, style=plot.style_linebr)
+plot(showLv and showC2 ? S2 : na, "C2 stop", color=color.new(cC2, 55), style=plot.style_linebr)
+bgcolor(showC1 and in1 ? color.new(cC1, 88) : na, title="C1 in trade")
+bgcolor(showC2 and in2 ? color.new(cC2, 88) : na, title="C2 in trade")
+plotshape(showC1 and entry1, "C1 entry", shape.triangleup, location.belowbar, cC1, size=size.small)
+plotshape(showC2 and entry2, "C2 entry", shape.triangleup, location.belowbar, cC2, size=size.small)
+
+f_row(table t, int r, string name, array<float> st, color col) =>
+    n = array.get(st, 0)
+    gl = array.get(st, 3)
+    table.cell(t, 0, r, name, text_color=color.white, bgcolor=color.new(col, 20), text_size=size.small)
+    table.cell(t, 1, r, str.tostring(n, "#"), text_size=size.small)
+    table.cell(t, 2, r, n > 0 ? str.tostring(100 * array.get(st, 1) / n, "#") + "%" : "-", text_size=size.small)
+    table.cell(t, 3, r, gl > 0 ? str.tostring(array.get(st, 2) / gl, "#.00") : "-", text_size=size.small)
+    table.cell(t, 4, r, str.tostring(array.get(st, 4), "#"), text_size=size.small)
+    table.cell(t, 5, r, n > 0 ? str.tostring(array.get(st, 4) / n, "#.0") : "-", text_size=size.small)
+    true
+
+var table tbl = table.new(position.top_right, 6, 4, bgcolor=color.new(color.black, 85), border_width=1)
+if showTable and barstate.islast
+    table.cell(tbl, 0, 0, "System", text_size=size.small)
+    table.cell(tbl, 1, 0, "Trades", text_size=size.small)
+    table.cell(tbl, 2, 0, "Win", text_size=size.small)
+    table.cell(tbl, 3, 0, "PF", text_size=size.small)
+    table.cell(tbl, 4, 0, "Net pts", text_size=size.small)
+    table.cell(tbl, 5, 0, "Avg pts", text_size=size.small)
+    if showC1
+        f_row(tbl, 1, "C1", st1, cC1)
+    if showC2
+        f_row(tbl, 2, "C2", st2, cC2)
+    if not timeframe.isintraday
+        table.cell(tbl, 0, 3, "Use an intraday (4h) chart", text_color=color.red, text_size=size.small)

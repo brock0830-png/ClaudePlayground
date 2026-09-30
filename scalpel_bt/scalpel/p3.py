@@ -263,9 +263,10 @@ def _simulate_target(D, spec, mode, i0, i1):
             d += 1
         last = d - 1                     # last close with target on
         if mode == "next_open":
+            # target on at closes s..last -> held in sessions s+1..last+1 -> sold at the open after close last+1
             e, px_in = s + 1, (O[s + 1] if s + 1 < n else C[s])
-            xday = last + 1 if last + 1 < n else last
-            px_out = O[last + 1] if last + 1 < n else C[last]
+            xday = last + 2 if last + 2 < n else n - 1
+            px_out = O[last + 2] if last + 2 < n else C[n - 1]
         else:
             e, px_in, xday, px_out = s, C[s], min(last + 1, n - 1), C[min(last + 1, n - 1)]
         if e >= n:

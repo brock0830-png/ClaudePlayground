@@ -95,3 +95,20 @@ P3A +23.8 pt (234); P3B +34.4 pt (63); P3C +150 pt (23 regime trades).
   test shows these exact frozen rules still work on data they were not built on.
 - No stops: the worst single test trade was -24% (IWM, 2008) and -584 pt on ES (April 2025). Size accordingly.
 - Market-on-close execution for the ETFs; next-open results are shown as the conservative case.
+
+## Correction (found after the test while verifying the Pine port)
+
+`scalpel/p3.py::_simulate_target` exited **regime** trades one session early in next-open mode (ES only). It is
+fixed, with a regression test (`tests/test_p3.py::test_regime_next_open_holds_the_last_on_session`).
+
+- **Not affected:** everything in close mode, which covers all SPY development data and the seven-market test
+  verdicts. P2A, P3A and P3B are not regime systems and are unaffected everywhere.
+- **Affected:** the ES leg of the 7 trend variants (T1/T2) and P3C's ES and next-open figures.
+- **Re-run with the fix** (`scripts/p3_regime_fix_check.py`, `regime_fix_check.json`): **no trend variant passes
+  the development gates.** 126-day momentum falls to the 83rd random-exposure percentile, below the required 90.
+  So P3C would not have been selected. It was selected only because of the bug, then failed the untouched test for
+  being drift, so the conclusion is unchanged.
+- **Corrected P3C figures:** ES 2020-2026 +104 pt per trade, PF 3.2 (reported above as +150 pt, PF 7.5).
+  Next-open on the seven markets +1.62% per trade, PF 2.27 (reported above as +2.11%, PF 3.65).
+- The test runner is locked to the freeze commit, so it was not re-run; the corrected numbers come from the check
+  script.

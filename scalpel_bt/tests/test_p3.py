@@ -51,3 +51,13 @@ def test_test_markets_locked():
         pytest.skip("already unlocked")
     with pytest.raises(PermissionError):
         p3.etf_daily("QQQ")
+
+
+def test_regime_next_open_holds_the_last_on_session():
+    # target on at closes 0..2 -> held in sessions 1..3 -> sold at the open of session 4
+    D = synth([[100 + i, 101 + i, 99 + i, 100 + i] for i in range(8)])
+    D["on"] = [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    t = p3.simulate(D, dict(kind="target", regime=["on>0.5"]), "next_open")
+    assert (t["entry"].iat[0], t["exit"].iat[0]) == (1, 4) and t["sessions"].iat[0] == 3
+    tc = p3.simulate(D, dict(kind="target", regime=["on>0.5"]), "close")
+    assert (tc["entry"].iat[0], tc["exit"].iat[0]) == (0, 3)

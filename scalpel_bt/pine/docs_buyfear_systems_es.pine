@@ -1,0 +1,292 @@
+//@version=5
+// Doc's BUY-FEAR SYSTEMS - ES/MES trade highlighter
+// Companion to docs_scalpel_v37.pine. Shades every trade of the systems that had a profit factor > 1 out of
+// sample in the scalpel_bt research (results/p2, results/p3), marks entries/exits, labels P&L and keeps a
+// stats table. Rules are the frozen research rules; defaults reproduce them.
+//
+// Use on CME_MINI:ES1! (or MES1!) with any timeframe from 1 hour to 1 day. Electronic (full) session.
+// For P&L that matches the research, enable back-adjustment of the continuous contract
+// (chart settings > Symbol > "Adjust for contract changes"); otherwise roll gaps land inside some trades.
+//
+// Timing (no repainting): every signal is computed from the session that just CLOSED (17:00 ET) and the
+// VIX close of that date, and the trade is entered at the OPEN of the next session (18:00 ET).
+// A "session" is TradingView's daily bar for ES (18:00-17:00 ET).
+//
+//  P2A  (confirmed) session IBS < 0.30 and VIX close > 20  -> buy, exit at the open after 5 sessions
+//  P3B  (confirmed, weaker since 2020) oversold score > 0.90 -> buy, exit after 5 sessions
+//  P3A  (confirmed) P2A signals, up to 3 overlapping units, each held 5 sessions
+//  P2C  (drift only) VIX close > 1.2 x its 10-day average -> buy, exit after 10 sessions
+//  P3C  (drift only) long while close > close 126 sessions ago
+//  P2B  (drift only, intraday charts) long 18:00-10:00 ET when the session closed below its 50-day SMA
+indicator("Doc's Buy-Fear Systems - ES", shorttitle="BuyFear", overlay=true, max_labels_count=500,
+     max_boxes_count=500, max_bars_back=600)
+
+// ---------------------------------------------------------------- inputs
+grpS = "Systems (OOS profit factor > 1)"
+showP2A = input.bool(true,  "P2A  IBS<0.30 & VIX>20, hold 5  [confirmed]", group=grpS)
+showP3B = input.bool(true,  "P3B  oversold score>0.90, hold 5  [confirmed]", group=grpS)
+showP3A = input.bool(false, "P3A  P2A stacked, max 3 units  [confirmed]", group=grpS)
+showP2C = input.bool(false, "P2C  VIX spike, hold 10  [drift only]", group=grpS)
+showP3C = input.bool(false, "P3C  126-session momentum  [drift only]", group=grpS)
+showP2B = input.bool(false, "P2B  overnight when below 50-day SMA  [drift only, intraday]", group=grpS)
+
+grpP = "Parameters (research values)"
+ibsTh   = input.float(0.30, "P2A/P3A: IBS below", step=0.05, group=grpP)
+vixTh   = input.float(20.0, "P2A/P3A: VIX close above", step=1.0, group=grpP)
+holdN   = input.int(5, "P2A/P3A/P3B: hold (sessions)", minval=1, group=grpP)
+maxUnits = input.int(3, "P3A: max open units", minval=1, maxval=10, group=grpP)
+scoreTh = input.float(0.90, "P3B: oversold score above", step=0.01, group=grpP)
+spikeX  = input.float(1.20, "P2C: VIX / 10-day avg above", step=0.05, group=grpP)
+holdC   = input.int(10, "P2C: hold (sessions)", minval=1, group=grpP)
+momLen  = input.int(126, "P3C: momentum lookback (sessions)", minval=10, group=grpP)
+costPts = input.float(0.60, "Round-trip cost per contract (points)", step=0.05, group=grpP)
+
+grpD = "Display"
+showBoxes  = input.bool(true, "Trade boxes (entry to exit)", group=grpD)
+showLabels = input.bool(true, "Exit labels with P&L (points)", group=grpD)
+showInputs = input.bool(false, "Entry labels with IBS / VIX / score used", group=grpD)
+showTable  = input.bool(true, "Stats table", group=grpD)
+vixSym     = input.symbol("CBOE:VIX", "VIX symbol", group=grpD)
+
+cP2A = color.teal
+cP3B = color.orange
+cP3A = color.blue
+cP2C = color.purple
+cP3C = color.gray
+cP2B = color.olive
+
+// ---------------------------------------------------------------- data
+// share of the last `len` values (including the current one) strictly below the current value
+f_pr(float src, int len) =>
+    float cnt = 0.0
+    for i = 0 to len - 1
+        cnt += src[i] < src ? 1.0 : 0.0
+    cnt / len
+
+// evaluated on the ES daily series; every output is the PREVIOUS (completed) session's value
+f_daily() =>
+    rng = high - low
+    ibs = rng > 0 ? (close - low) / rng : 0.5
+    atr20 = ta.sma(rng, 20)
+    r3 = (close - close[3]) / atr20
+    d5 = (close - ta.sma(close, 5)) / atr20
+    rsi2 = ta.rsi(close, 2)
+    score = ((1 - ibs) + (1 - rsi2 / 100) + (1 - f_pr(r3, 252)) + (1 - f_pr(d5, 252))) / 4
+    sma50 = ta.sma(close, 50)
+    mom = close > close[momLen] ? 1.0 : 0.0
+    [ibs[1], score[1], close[1], sma50[1], mom[1]]
+
+[pIbs, pScore, pClose, pSma50, pMom] = request.security(syminfo.tickerid, "D", f_daily(), lookahead=barmerge.lookahead_on)
+[vixNow, vixS10Now] = request.security(vixSym, "D", [close, ta.sma(close, 10)])
+// value on the previous chart bar = the VIX close of the session that just closed (VIX settles 16:15 ET)
+vixPrev = vixNow[1]
+vixS10Prev = vixS10Now[1]
+
+newSess = ta.change(time("D")) != 0
+okTF = timeframe.isintraday or timeframe.isdaily
+
+// ---------------------------------------------------------------- helpers
+// stats array: [trades, wins, gross win, gross loss, net]
+f_rec(array<float> st, float pnl) =>
+    array.set(st, 0, array.get(st, 0) + 1)
+    array.set(st, 1, array.get(st, 1) + (pnl > 0 ? 1 : 0))
+    array.set(st, 2, array.get(st, 2) + math.max(pnl, 0))
+    array.set(st, 3, array.get(st, 3) + math.max(-pnl, 0))
+    array.set(st, 4, array.get(st, 4) + pnl)
+    true
+
+f_draw(int x1, float p1, int x2, float p2, color col, string tag) =>
+    pnl = p2 - p1 - costPts
+    if showBoxes
+        box.new(left=x1, top=math.max(p1, p2), right=x2, bottom=math.min(p1, p2), border_color=col,
+             bgcolor=color.new(pnl > 0 ? color.green : color.red, 82))
+    if showLabels
+        label.new(x2, math.max(p1, p2), tag + " " + (pnl >= 0 ? "+" : "") + str.tostring(pnl, "#.0"),
+             style=label.style_label_down, color=color.new(col, 15), textcolor=color.white, size=size.tiny)
+    pnl
+
+f_entryLabel(color col, string tag) =>
+    if showInputs
+        label.new(bar_index, low, tag + "\nIBS " + str.tostring(pIbs, "#.00") + "  VIX " + str.tostring(vixPrev, "#.0") +
+             "\nscore " + str.tostring(pScore, "#.00"), style=label.style_label_up, color=color.new(col, 30),
+             textcolor=color.white, size=size.tiny)
+    true
+
+var stA = array.from(0.0, 0.0, 0.0, 0.0, 0.0)
+var stB = array.from(0.0, 0.0, 0.0, 0.0, 0.0)
+var stS = array.from(0.0, 0.0, 0.0, 0.0, 0.0)
+var stC = array.from(0.0, 0.0, 0.0, 0.0, 0.0)
+var stM = array.from(0.0, 0.0, 0.0, 0.0, 0.0)
+var stO = array.from(0.0, 0.0, 0.0, 0.0, 0.0)
+
+// ---------------------------------------------------------------- P2A
+sigA = pIbs < ibsTh and vixPrev > vixTh
+var bool aIn = false
+var int aHeld = 0
+var float aPx = na
+var int aBar = na
+bool aEntry = false
+if okTF and showP2A and newSess
+    bool exited = false
+    if aIn
+        aHeld += 1
+        if aHeld >= holdN
+            f_rec(stA, f_draw(aBar, aPx, bar_index, open, cP2A, "P2A"))
+            aIn := false
+            exited := true
+    if not aIn and not exited and sigA
+        aIn := true
+        aHeld := 0
+        aPx := open
+        aBar := bar_index
+        aEntry := true
+        f_entryLabel(cP2A, "P2A")
+
+// ---------------------------------------------------------------- P3B
+sigB = pScore > scoreTh
+var bool bIn = false
+var int bHeld = 0
+var float bPx = na
+var int bBar = na
+bool bEntry = false
+if okTF and showP3B and newSess
+    bool exited = false
+    if bIn
+        bHeld += 1
+        if bHeld >= holdN
+            f_rec(stB, f_draw(bBar, bPx, bar_index, open, cP3B, "P3B"))
+            bIn := false
+            exited := true
+    if not bIn and not exited and sigB
+        bIn := true
+        bHeld := 0
+        bPx := open
+        bBar := bar_index
+        bEntry := true
+        f_entryLabel(cP3B, "P3B")
+
+// ---------------------------------------------------------------- P3A (stacked P2A)
+var sPx = array.new_float(0)
+var sHeld = array.new_int(0)
+var sBar = array.new_int(0)
+bool sEntry = false
+if okTF and showP3A and newSess
+    int i = array.size(sHeld) - 1
+    while i >= 0
+        array.set(sHeld, i, array.get(sHeld, i) + 1)
+        if array.get(sHeld, i) >= holdN
+            f_rec(stS, f_draw(array.get(sBar, i), array.get(sPx, i), bar_index, open, cP3A, "P3A"))
+            array.remove(sHeld, i)
+            array.remove(sPx, i)
+            array.remove(sBar, i)
+        i -= 1
+    if sigA and array.size(sHeld) < maxUnits
+        array.push(sPx, open)
+        array.push(sHeld, 0)
+        array.push(sBar, bar_index)
+        sEntry := true
+        f_entryLabel(cP3A, "P3A")
+sUnits = array.size(sHeld)
+
+// ---------------------------------------------------------------- P2C
+sigC = vixPrev > spikeX * vixS10Prev
+var bool cIn = false
+var int cHeld = 0
+var float cPx = na
+var int cBar = na
+bool cEntry = false
+if okTF and showP2C and newSess
+    bool exited = false
+    if cIn
+        cHeld += 1
+        if cHeld >= holdC
+            f_rec(stC, f_draw(cBar, cPx, bar_index, open, cP2C, "P2C"))
+            cIn := false
+            exited := true
+    if not cIn and not exited and sigC
+        cIn := true
+        cHeld := 0
+        cPx := open
+        cBar := bar_index
+        cEntry := true
+
+// ---------------------------------------------------------------- P3C
+var bool mIn = false
+var float mPx = na
+var int mBar = na
+bool mEntry = false
+if okTF and showP3C and newSess
+    if mIn and pMom < 0.5
+        f_rec(stM, f_draw(mBar, mPx, bar_index, open, cP3C, "P3C"))
+        mIn := false
+    else if not mIn and pMom > 0.5
+        mIn := true
+        mPx := open
+        mBar := bar_index
+        mEntry := true
+
+// ---------------------------------------------------------------- P2B (intraday charts only)
+hNY = hour(time, "America/New_York")
+var bool oIn = false
+var float oPx = na
+var int oBar = na
+bool oEntry = false
+if timeframe.isintraday and showP2B
+    if oIn and hNY >= 10 and hNY < 17
+        f_rec(stO, f_draw(oBar, oPx, bar_index, open, cP2B, "P2B"))
+        oIn := false
+    // enter at every 18:00 ET bar (holiday weekends merge two 18:00 starts into one TradingView session)
+    if hNY == 18 and not oIn and pClose < pSma50
+        oIn := true
+        oPx := open
+        oBar := bar_index
+        oEntry := true
+
+// ---------------------------------------------------------------- visuals
+bgcolor(showP2A and aIn ? color.new(cP2A, 88) : na, title="P2A in trade")
+bgcolor(showP3B and bIn ? color.new(cP3B, 88) : na, title="P3B in trade")
+bgcolor(showP3A and sUnits > 0 ? color.new(cP3A, 94 - 6 * math.min(sUnits, 3)) : na, title="P3A units open")
+bgcolor(showP2C and cIn ? color.new(cP2C, 90) : na, title="P2C in trade")
+bgcolor(showP3C and mIn ? color.new(cP3C, 92) : na, title="P3C in trade")
+bgcolor(showP2B and oIn ? color.new(cP2B, 88) : na, title="P2B in trade")
+plotshape(showP2A and aEntry, "P2A entry", shape.triangleup, location.belowbar, cP2A, size=size.small)
+plotshape(showP3B and bEntry, "P3B entry", shape.triangleup, location.belowbar, cP3B, size=size.small)
+plotshape(showP3A and sEntry, "P3A unit added", shape.circle, location.belowbar, cP3A, size=size.tiny)
+plotshape(showP2C and cEntry, "P2C entry", shape.diamond, location.belowbar, cP2C, size=size.small)
+plotshape(showP3C and mEntry, "P3C entry", shape.square, location.belowbar, cP3C, size=size.tiny)
+plotshape(showP2B and oEntry, "P2B entry", shape.triangleup, location.belowbar, cP2B, size=size.tiny)
+
+// ---------------------------------------------------------------- stats table
+f_row(table t, int r, string name, array<float> st, color col) =>
+    n = array.get(st, 0)
+    gl = array.get(st, 3)
+    table.cell(t, 0, r, name, text_color=color.white, bgcolor=color.new(col, 20), text_size=size.small)
+    table.cell(t, 1, r, str.tostring(n, "#"), text_size=size.small)
+    table.cell(t, 2, r, n > 0 ? str.tostring(100 * array.get(st, 1) / n, "#") + "%" : "-", text_size=size.small)
+    table.cell(t, 3, r, gl > 0 ? str.tostring(array.get(st, 2) / gl, "#.00") : "-", text_size=size.small)
+    table.cell(t, 4, r, str.tostring(array.get(st, 4), "#"), text_size=size.small)
+    table.cell(t, 5, r, n > 0 ? str.tostring(array.get(st, 4) / n, "#.0") : "-", text_size=size.small)
+    true
+
+var table tbl = table.new(position.top_right, 6, 8, bgcolor=color.new(color.black, 85), border_width=1)
+if showTable and barstate.islast
+    table.cell(tbl, 0, 0, "System", text_size=size.small)
+    table.cell(tbl, 1, 0, "Trades", text_size=size.small)
+    table.cell(tbl, 2, 0, "Win", text_size=size.small)
+    table.cell(tbl, 3, 0, "PF", text_size=size.small)
+    table.cell(tbl, 4, 0, "Net pts", text_size=size.small)
+    table.cell(tbl, 5, 0, "Avg pts", text_size=size.small)
+    if showP2A
+        f_row(tbl, 1, "P2A", stA, cP2A)
+    if showP3B
+        f_row(tbl, 2, "P3B", stB, cP3B)
+    if showP3A
+        f_row(tbl, 3, "P3A", stS, cP3A)
+    if showP2C
+        f_row(tbl, 4, "P2C", stC, cP2C)
+    if showP3C
+        f_row(tbl, 5, "P3C", stM, cP3C)
+    if showP2B
+        f_row(tbl, 6, "P2B", stO, cP2B)
+    if not okTF
+        table.cell(tbl, 0, 7, "Use a 1h-1D chart", text_color=color.red, text_size=size.small)
