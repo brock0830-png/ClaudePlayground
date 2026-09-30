@@ -1,0 +1,38 @@
+{
+ "P2A_reference": {
+  "months_with_trades": 219,
+  "mean_pct": 0.5396766297297241,
+  "month_clustered_ci95_pct": [
+   0.24978132890395316,
+   0.8264423252163197
+  ],
+  "share_months_positive": 0.680365296803653
+ },
+ "P3A_stack3_IBS_VIX": {
+  "months_with_trades": 220,
+  "mean_pct": 0.48132613655024575,
+  "month_clustered_ci95_pct": [
+   0.18569626884192503,
+   0.7776530569210762
+  ],
+  "share_months_positive": 0.7136363636363636
+ },
+ "P3B_oversold_score90": {
+  "months_with_trades": 319,
+  "mean_pct": 0.5563984586567137,
+  "month_clustered_ci95_pct": [
+   0.2685812295782524,
+   0.844014836505757
+  ],
+  "share_months_positive": 0.6927899686520376
+ },
+ "P3C_momentum126": {
+  "months_with_trades": 230,
+  "mean_pct": 1.4747400555621875,
+  "month_clustered_ci95_pct": [
+   0.6424001271425913,
+   2.3612188379581434
+  ],
+  "share_months_positive": 0.4043478260869565
+ }
+}
