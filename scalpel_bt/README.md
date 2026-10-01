@@ -6,6 +6,11 @@ Can Chris's Scalpel (TrueALGO-clone) D/W/M levels drive an EV+ ES/SPX system on 
 **Start here: `results/SYSTEM.md`**, a one-page rundown of the system that survived every test, and
 `pine/README.md` for the TradingView indicators that draw its trades.
 
+**Phase 4 (stress tests before real money):** P2A passed on 15 more untouched ETFs (5,116 trades, +0.45% per trade
+over random entries, 15/15 markets). Crash stress puts its 99th-percentile drawdown at 31.5% of notional, which means about
+1 MES per $61k at a 20% tolerance. P3B failed its trend-gate, single-stock (point-in-time S&P 500) and combination tests.
+See `results/p4/report.md`, `results/p4/sizing_table.md` and the forward logger in `results/live/README.md`.
+
 **Phase 3 (variations + a different validation):** targets, stops, holding periods, trend, volume and composite
 scores were tested on 27 years of development data (SPY 1994-2012 + ES 2013-2019). Then the frozen picks and the
 unchanged P2A were tested once on seven untouched markets (QQQ, IWM, DIA, EFA, EWG, EWJ, EWU; 1997-2026).
@@ -37,6 +42,9 @@ Reproduce (Python 3.11):
     python scripts/summarize_log.py              # gate counts and rankings
     python scripts/dev_candidates.py             # DEV pages for the frozen candidates
     python scripts/run_oos.py                    # one-shot OOS; needs results/OOS_UNLOCKED = freeze commit
+
+Phase 4: `PROTOCOL_P4.md`, `scripts/p4_*.py` (each test runs once, locked to `results/p4/TEST_UNLOCKED`),
+`results/p4/`, `results/live/`.
 
 Phase 3: `PROTOCOL_P3.md`, `scripts/p3_screen.py` (258 development variants), `scripts/p3_test.py` (one-shot
 test, locked to the freeze commit), `results/p3/`. Pine logic checks: `scripts/pine_replica.py`,
