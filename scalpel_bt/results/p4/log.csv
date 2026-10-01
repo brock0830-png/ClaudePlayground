@@ -71,3 +71,6 @@ logged,test,variant,system,universe,mode,cost_case,n,markets,mean_ret_pct,excess
 2026-10-01 17:16,B4,P3B all signals,P3B,S&P500 PIT stocks 2005-2026,close,highvix,94993,937,0.38032142453459145,0.22879900922395416,-0.011329556019254101,0.4800656670668578,0.6467449306296692,,,robustness,
 2026-10-01 17:16,B4,P3B ex-earnings windows,P3B,S&P500 PIT stocks 2005-2026,close,base,86162,937,0.42377103737972427,0.24755022023302758,-0.0016760247931538674,0.5143204746669003,0.656350053361793,0.0,13480.0,FAIL,
 2026-10-01 17:16,B4,P3B ex-earnings windows,P3B,S&P500 PIT stocks 2005-2026,close,highvix,86162,937,0.388397604061755,0.23767878080346747,-0.011507360375756902,0.5014642234685968,0.6499466382070438,,,robustness,
+2026-10-01 17:18,B2,decay index,P3B,index,close,base,1191,,,,,,,,,descriptive,"2005-19 0.577% vs 2020-26 0.226%; composition 0.090%, within -0.450%"
+2026-10-01 17:18,B2,decay other ETF,P3B,other ETF,close,base,4016,,,,,,,,,descriptive,"2005-19 0.339% vs 2020-26 0.075%; composition 0.122%, within -0.394%"
+2026-10-01 17:18,B2,decay stock,P3B,stock,close,base,94993,,,,,,,,,descriptive,"2005-19 0.392% vs 2020-26 0.093%; composition 0.089%, within -0.441%"

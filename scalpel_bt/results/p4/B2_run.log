@@ -1,0 +1,18 @@
+
+== index: 2005-19 [0.5771745597479396, 0.250198179666076, 0.9308677306388023, 618]  2020-26 [0.22646202581030928, -0.5715712419362311, 0.9504660004179328, 302]
+   fade: pre 0.507% -> post 0.147%; composition 0.090%, within-cell -0.450%
+   by VIX: {'15-20': {'size': 346, 'mean': 0.175}, '20-25': {'size': 328, 'mean': 0.374}, '<15': {'size': 177, 'mean': 0.44}, '>25': {'size': 340, 'mean': 0.691}} 
+   by trend: {'down': {'size': 271, 'mean': 0.485}, 'up': {'size': 920, 'mean': 0.461}}
+   cells: {"15-20|down": {"w_pre": 0.024, "w_post": 0.007, "ex_pre_pct": 0.834, "ex_post_pct": 3.32}, "15-20|up": {"w_pre": 0.294, "w_post": 0.285, "ex_pre_pct": 0.099, "ex_post_pct": 0.248}, "20-25|down": {"w_pre": 0.039, "w_post": 0.043, "ex_pre_pct": -0.289, "ex_post_pct": -0.809}, "20-25|up": {"w_pre": 0.181, "w_post": 0.275, "ex_pre_pct": 0.27, "ex_post_pct": 0.349}, "<15|down": {"w_pre": 0.01, "w_post": 0.0, "ex_pre_pct": -0.238, "ex_post_pct": 0.0}, "<15|up": {"w_pre": 0.218, "w_post": 0.066, "ex_pre_pct": 0.421, "ex_post_pct": 0.993}, ">25|down": {"w_pre": 0.117, "w_post": 0.113, "ex_pre_pct": 1.282, "ex_post_pct": -1.291}, ">25|up": {"w_pre": 0.117, "w_post": 0.212, "ex_pre_pct": 1.553, "ex_post_pct": 0.341}}
+
+== other ETF: 2005-19 [0.3388085727571415, 0.05455622805537434, 0.6395223529659269, 2176]  2020-26 [0.07477196876460053, -0.4955219361937131, 0.5991188088519215, 1028]
+   fade: pre 0.265% -> post -0.008%; composition 0.122%, within-cell -0.394%
+   by VIX: {'15-20': {'size': 1173, 'mean': 0.133}, '20-25': {'size': 952, 'mean': 0.2}, '<15': {'size': 776, 'mean': 0.046}, '>25': {'size': 1115, 'mean': 0.546}} 
+   by trend: {'down': {'size': 1207, 'mean': 0.517}, 'up': {'size': 2809, 'mean': 0.201}}
+   cells: {"15-20|down": {"w_pre": 0.066, "w_post": 0.06, "ex_pre_pct": 0.527, "ex_post_pct": 0.49}, "15-20|up": {"w_pre": 0.224, "w_post": 0.272, "ex_pre_pct": -0.028, "ex_post_pct": -0.054}, "20-25|down": {"w_pre": 0.06, "w_post": 0.057, "ex_pre_pct": -0.275, "ex_post_pct": -0.552}, "20-25|up": {"w_pre": 0.145, "w_post": 0.188, "ex_pre_pct": -0.182, "ex_post_pct": 0.504}, "<15|down": {"w_pre": 0.044, "w_post": 0.016, "ex_pre_pct": -0.257, "ex_post_pct": 0.517}, "<15|up": {"w_pre": 0.252, "w_post": 0.083, "ex_pre_pct": 0.114, "ex_post_pct": -0.246}, ">25|down": {"w_pre": 0.113, "w_post": 0.117, "ex_pre_pct": 1.22, "ex_post_pct": 0.149}, ">25|up": {"w_pre": 0.097, "w_post": 0.207, "ex_pre_pct": 1.274, "ex_post_pct": -0.438}}
+
+== stock: 2005-19 [0.39227684169223836, 0.13253399253827294, 0.6942374606914969, 66151]  2020-26 [0.09325041581545623, -0.42547920464526495, 0.5604316785070017, 28842]
+   fade: pre 0.320% -> post -0.031%; composition 0.089%, within-cell -0.441%
+   by VIX: {'15-20': {'size': 27522, 'mean': 0.08}, '20-25': {'size': 18480, 'mean': 0.071}, '<15': {'size': 26542, 'mean': 0.039}, '>25': {'size': 22449, 'mean': 0.647}} 
+   by trend: {'down': {'size': 32467, 'mean': 0.316}, 'up': {'size': 62526, 'mean': 0.211}}
+   cells: {"15-20|down": {"w_pre": 0.072, "w_post": 0.106, "ex_pre_pct": -0.069, "ex_post_pct": 0.206}, "15-20|up": {"w_pre": 0.198, "w_post": 0.23, "ex_pre_pct": 0.114, "ex_post_pct": 0.104}, "20-25|down": {"w_pre": 0.059, "w_post": 0.087, "ex_pre_pct": -0.143, "ex_post_pct": -0.031}, "20-25|up": {"w_pre": 0.116, "w_post": 0.153, "ex_pre_pct": 0.16, "ex_post_pct": 0.165}, "<15|down": {"w_pre": 0.09, "w_post": 0.038, "ex_pre_pct": -0.068, "ex_post_pct": 0.191}, "<15|up": {"w_pre": 0.255, "w_post": 0.092, "ex_pre_pct": 0.099, "ex_post_pct": 0.012}, ">25|down": {"w_pre": 0.11, "w_post": 0.135, "ex_pre_pct": 1.6, "ex_post_pct": -0.399}, ">25|up": {"w_pre": 0.1, "w_post": 0.161, "ex_pre_pct": 0.973, "ex_post_pct": -0.336}}

@@ -112,7 +112,7 @@ def highvix_ret(D, sig_idx, px_in, ret, unadj_px=None):
 
 # ------------------------------------------------------------------ random entries
 def random_entries(D, t: pd.DataFrame, mode, i0, i1, rng, n_draws=N_DRAWS, eligible=None, highvix=False,
-                   unadj=None):
+                   unadj=None, raw_open=None):
     """Mean return of each of n_draws sets of random entries (same count, same holding sessions, same
     execution mode and costs). Entry (signal) days uniform over [i0, i1) restricted to `eligible`
     (bool array) and to days whose exit fits in the data."""
@@ -149,7 +149,8 @@ def random_entries(D, t: pd.DataFrame, mode, i0, i1, rng, n_draws=N_DRAWS, eligi
             cost = p3.ES_RT_PTS + p3.ES_ROLL_PTS * rolls
         else:
             cost = p3.ETF_RT_PCT * pin
-        r = (pout - pin - cost) / pin
+        den = pin if raw_open is None else raw_open[e]          # ES: % of the raw traded price
+        r = (pout - pin - cost) / den
         if highvix:
             hv = vix[s] > HV_VIX
             extra = (HV_ES_PTS / pin) if is_es else HV_TICKS_USD / (pin if unadj is None else unadj[s])
