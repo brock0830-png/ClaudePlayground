@@ -218,7 +218,7 @@ def dsr(r) -> dict:
 
 
 # ------------------------------------------------------------------ daily mark-to-market
-def daily_mtm(D: pd.DataFrame, t: pd.DataFrame, mode: str, unit="pct") -> pd.Series:
+def daily_mtm(D: pd.DataFrame, t: pd.DataFrame, mode: str, unit="pct", denom: str = "px_in") -> pd.Series:
     """Daily P&L by bar date. unit='pct': fraction of the entry notional; 'pts': price points.
     close mode: entry at C[e], marked at closes e+1..x, cost at exit. next_open (ES): entry at O[e],
     marked at closes e..x-1, the exit at O[x] is booked on bar x's date; cost at exit."""
@@ -236,7 +236,7 @@ def daily_mtm(D: pd.DataFrame, t: pd.DataFrame, mode: str, unit="pct") -> pd.Ser
             days = np.arange(e + 1, x + 1)
         step = np.diff(path)
         step[-1] -= cost
-        scale = (1.0 / pin) if unit == "pct" else 1.0
+        scale = (1.0 / float(getattr(r, denom))) if unit == "pct" else 1.0
         np.add.at(pnl, days, step * scale)
     return pd.Series(pnl, index=dates)
 
@@ -292,3 +292,27 @@ def pooled_summary(P, per, col="excess", raw="ret") -> dict:
     rm, rlo, rhi = month_ci(P[raw], P["date"])
     out.update(raw_ci_lo_pct=rlo * 100, raw_ci_hi_pct=rhi * 100)
     return out
+
+
+# ------------------------------------------------------------------ ES raw (traded) prices
+def es_raw_prices(split="all") -> pd.DataFrame:
+    """Raw front-month session open/close aligned row-for-row with p3.es_daily(load_bars(split)).
+    The engine's ES prices are roll-adjusted forward (anchored to the 2013 contract), so point P&L is
+    correct but % returns must be divided by the RAW traded price."""
+    from .data import load_bars
+    from .p2 import es_context
+    bars = load_bars(split)
+    ctx = es_context(bars)
+    sess = ctx["sess"]
+    raw = pd.DataFrame({"open": bars["open"].values, "close": bars["close"].values, "sess": sess})
+    g = raw.groupby("sess")
+    out = pd.DataFrame({"raw_open": g["open"].first().values, "raw_close": g["close"].last().values})
+    out["date"] = ctx["D"]["date"].values
+    return out
+
+
+def with_raw_denominator(t: pd.DataFrame, raw: pd.DataFrame, mode="next_open") -> pd.DataFrame:
+    """ES trades: replace ret with pnl / raw entry price (entry at the raw session open in next_open mode)."""
+    col = "raw_open" if mode == "next_open" else "raw_close"
+    px_raw = raw[col].values[t["entry"].values]
+    return t.assign(px_raw=px_raw, ret=t["pnl"] / px_raw)

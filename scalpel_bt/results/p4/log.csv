@@ -4,3 +4,15 @@ logged,test,variant,system,universe,mode,cost_case,n,markets,mean_ret_pct,excess
 2026-10-01 17:09,A3,P2A frozen,P2A,fresh15,next_open,base,5116,15,0.49379612236071424,0.3274937782922328,0.06882354945842403,0.5922398975966993,1.0,,,robustness,
 2026-10-01 17:10,B1,P3B ungated,P3B,fresh15,close,base,3168,15,0.41349832329539676,0.2510792536862212,0.009598169735173561,0.48812488992615527,0.8666666666666667,1.1221861016060485e-17,13415,arm,"gated-ungated excess -0.085% [-0.222,0.043]"
 2026-10-01 17:10,B1,P3B + ma50>ma200,P3B,fresh15,close,base,2261,15,0.32291323533922794,0.1661369021587861,-0.08893864440897611,0.41612841463094025,0.7333333333333333,3.794210783083083e-14,13415,FAIL,"gated-ungated excess -0.085% [-0.222,0.043]"
+2026-10-01 17:11,A2,ES P2A,P2A,ES,mtm,base,153,,,,,,,,,descriptive,maxDD p50/p95/p99 721.2/1060/1284; streak p99 8
+2026-10-01 17:11,A2,SPY P2A,P2A,SPY,mtm,base,149,,,,,,,,,descriptive,maxDD p50/p95/p99 0.1639/0.2661/0.3266; streak p99 9
+2026-10-01 17:11,A2,ES P3B,P3B,ES,mtm,base,111,,,,,,,,,descriptive,maxDD p50/p95/p99 739.2/1241/1562; streak p99 8
+2026-10-01 17:11,A2,SPY P3B,P3B,SPY,mtm,base,115,,,,,,,,,descriptive,maxDD p50/p95/p99 0.2108/0.3668/0.46; streak p99 8
+2026-10-01 17:11,A2,ES P2A+P3B,P2A+P3B,ES,mtm,base,264,,,,,,,,,descriptive,maxDD p50/p95/p99 1333/1984/2389; streak p99 12
+2026-10-01 17:11,A2,SPY P2A+P3B,P2A+P3B,SPY,mtm,base,264,,,,,,,,,descriptive,maxDD p50/p95/p99 0.2837/0.4639/0.5762; streak p99 10
+2026-10-01 17:11,A2,ES P2A pct addendum,P2A,ES,mtm,base,153,,,,,,,,,descriptive,maxDD pct p50/p95/p99 0.199/0.255/0.305
+2026-10-01 17:11,A2,ES P3B pct addendum,P3B,ES,mtm,base,111,,,,,,,,,descriptive,maxDD pct p50/p95/p99 0.195/0.335/0.415
+2026-10-01 17:11,A2,ES P2A+P3B pct addendum,P2A+P3B,ES,mtm,base,264,,,,,,,,,descriptive,maxDD pct p50/p95/p99 0.312/0.474/0.565
+2026-10-01 17:12,A2,ES P2A pct addendum,P2A,ES,mtm,base,153,,,,,,,,,descriptive,"maxDD pct p50/p95/p99 0.205/0.262/0.315; supersedes the earlier pct addendum rows, which divided by the roll-adjusted ES price"
+2026-10-01 17:12,A2,ES P3B pct addendum,P3B,ES,mtm,base,111,,,,,,,,,descriptive,"maxDD pct p50/p95/p99 0.200/0.345/0.429; supersedes the earlier pct addendum rows, which divided by the roll-adjusted ES price"
+2026-10-01 17:12,A2,ES P2A+P3B pct addendum,P2A+P3B,ES,mtm,base,264,,,,,,,,,descriptive,"maxDD pct p50/p95/p99 0.322/0.482/0.575; supersedes the earlier pct addendum rows, which divided by the roll-adjusted ES price"
