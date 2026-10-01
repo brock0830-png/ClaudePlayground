@@ -8,3 +8,5 @@ data/cache/
 scalpel_bt/data/es_levels_CME_MINI_ES1_240.csv
 scalpel_bt/data/cache/
 scalpel_bt/data/sharadar/
+data/binance/
+orderflow/cache/
