@@ -87,3 +87,26 @@ def test_p4_trades_reproduce_phase3_p2a_on_qqq():
     t = p4.trades(D, p4.P2A, "close", i0, i1)
     k = min(len(t), len(old)) - 1                         # the last trade may differ (data end)
     assert np.allclose(t["ret"].values[:k], old["ret"].values[:k])
+
+
+def test_logger_signal_then_in_position_and_append_only(tmp_path, monkeypatch):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    import p4_signal_logger as lg
+    es = p4.load_es("all")
+    t = p4.trades(es, p4.P2A, "next_open", 0, len(es) - 10)
+    sig_date = pd.Timestamp(es["date"].iat[int(t["sig"].iat[-1])])
+    bars = es[["date", "open", "high", "low", "close"]]
+    v = p3.load_vix("VIX")
+    r0 = {r["system"]: r for r in lg.evaluate(bars, v, "ES", sig_date)}
+    assert r0["P2A"]["signal"] == 1 and r0["P2A"]["in_position"] == 0
+    nxt = pd.Timestamp(es["date"].iat[int(t["sig"].iat[-1]) + 1])
+    r1 = {r["system"]: r for r in lg.evaluate(bars, v, "ES", nxt)}
+    assert r1["P2A"]["in_position"] == 1 and r1["P2A"]["signal"] == 0
+    monkeypatch.setattr(lg, "LOG", tmp_path / "log.csv")
+    row = dict(r0["P2A"], logged_utc="x", source="test")
+    lg.append([row])
+    before = (tmp_path / "log.csv").read_text()
+    assert (row["date"], "ES", "P2A") in lg.logged_keys()
+    lg.append([dict(r1["P2A"], logged_utc="y", source="test")])
+    after = (tmp_path / "log.csv").read_text()
+    assert after.startswith(before)                        # earlier rows untouched
