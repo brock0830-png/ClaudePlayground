@@ -74,3 +74,6 @@ logged,test,variant,system,universe,mode,cost_case,n,markets,mean_ret_pct,excess
 2026-10-01 17:18,B2,decay index,P3B,index,close,base,1191,,,,,,,,,descriptive,"2005-19 0.577% vs 2020-26 0.226%; composition 0.090%, within -0.450%"
 2026-10-01 17:18,B2,decay other ETF,P3B,other ETF,close,base,4016,,,,,,,,,descriptive,"2005-19 0.339% vs 2020-26 0.075%; composition 0.122%, within -0.394%"
 2026-10-01 17:18,B2,decay stock,P3B,stock,close,base,94993,,,,,,,,,descriptive,"2005-19 0.392% vs 2020-26 0.093%; composition 0.089%, within -0.441%"
+2026-10-01 17:19,B5,P2A+P3B ES_points_2013_2026,P2A+P3B,ES_points_2013_2026,mtm,base,264,,,,,,,,,FAIL,ratio P2A 6.63 combined 5.54; corr(both) 0.9361681754697243
+2026-10-01 17:19,B5,P2A+P3B ES_pct_2013_2026,P2A+P3B,ES_pct_2013_2026,mtm,base,264,,,,,,,,,FAIL,ratio P2A 5.84 combined 4.94; corr(both) 0.9342335747522187
+2026-10-01 17:19,B5,P2A+P3B SPY_pct_1994_2026,P2A+P3B,SPY_pct_1994_2026,mtm,base,791,,,,,,,,,FAIL,ratio P2A 11.01 combined 12.86; corr(both) 0.9992239208863949

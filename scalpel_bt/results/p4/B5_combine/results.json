@@ -1,0 +1,91 @@
+{
+ "cond1_B1_ungated_ci_lo_pct": 0.009598169735173561,
+ "cond1": true,
+ "cond1_highvix_ci_lo_pct": -0.013292222179340335,
+ "ES_points_2013_2026": {
+  "n_P2A": 153,
+  "n_P3B": 111,
+  "share_P3B_entries_during_P2A_or_same_day": 0.5495495495495496,
+  "share_days_both_in_position_of_P3B_days": 0.5737951807228916,
+  "corr_daily_pnl_both_in_position": 0.9361681754697243,
+  "corr_daily_pnl_all_days": 0.626085654981623,
+  "P2A": {
+   "total": 4473.73,
+   "max_dd": 674.3799999999997,
+   "ratio": 6.6338414543729085,
+   "worst_month": -279.54999999999995
+  },
+  "P3B": {
+   "total": 2904.7500000000005,
+   "max_dd": 817.6999999999996,
+   "ratio": 3.552341934694878,
+   "worst_month": -242.95000000000002
+  },
+  "combined": {
+   "total": 7378.480000000001,
+   "max_dd": 1331.6999999999998,
+   "ratio": 5.540647292933846,
+   "worst_month": -453.35
+  },
+  "P3B_loss_on_P2A_loss_days_share": 0.5266666666666666,
+  "combined_ratio_ge_P2A": false
+ },
+ "ES_pct_2013_2026": {
+  "n_P2A": 153,
+  "n_P3B": 111,
+  "share_P3B_entries_during_P2A_or_same_day": 0.5495495495495496,
+  "share_days_both_in_position_of_P3B_days": 0.5737951807228916,
+  "corr_daily_pnl_both_in_position": 0.9342335747522187,
+  "corr_daily_pnl_all_days": 0.5984878521052396,
+  "P2A": {
+   "total": 1.2871178106449448,
+   "max_dd": 0.22040083735775773,
+   "ratio": 5.839895283862634,
+   "worst_month": -0.07291343468817871
+  },
+  "P3B": {
+   "total": 0.6279721349537806,
+   "max_dd": 0.19611380156648592,
+   "ratio": 3.2020802714432484,
+   "worst_month": -0.0886753210748895
+  },
+  "combined": {
+   "total": 1.9150899455987254,
+   "max_dd": 0.387492095082543,
+   "ratio": 4.942268422768149,
+   "worst_month": -0.14068718732665839
+  },
+  "P3B_loss_on_P2A_loss_days_share": 0.5266666666666666,
+  "combined_ratio_ge_P2A": false
+ },
+ "SPY_pct_1994_2026": {
+  "n_P2A": 475,
+  "n_P3B": 316,
+  "share_P3B_entries_during_P2A_or_same_day": 0.5886075949367089,
+  "share_days_both_in_position_of_P3B_days": 0.5203562340966921,
+  "corr_daily_pnl_both_in_position": 0.9992239208863949,
+  "corr_daily_pnl_all_days": 0.5361377418500484,
+  "P2A": {
+   "total": 3.2527151399340464,
+   "max_dd": 0.2955178236894782,
+   "ratio": 11.006832343729993,
+   "worst_month": -0.1878559481396596
+  },
+  "P3B": {
+   "total": 2.341057904109329,
+   "max_dd": 0.2313667167965634,
+   "ratio": 10.118386674293257,
+   "worst_month": -0.10394536675958875
+  },
+  "combined": {
+   "total": 5.593773044043375,
+   "max_dd": 0.43503605694670755,
+   "ratio": 12.858182568367244,
+   "worst_month": -0.23046584226139483
+  },
+  "P3B_loss_on_P2A_loss_days_share": 0.5045180722891566,
+  "combined_ratio_ge_P2A": true
+ },
+ "cond2": false,
+ "PASS": false
+}
