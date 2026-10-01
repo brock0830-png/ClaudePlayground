@@ -253,4 +253,9 @@ is never committed to GitHub.
 
 ## Amendments
 
-(none)
+### Amendment 1 (clarification, made before any data was downloaded)
+
+- §5 neighbour set: N(t) is the SPXW strike grid at 5-point spacing within ±1.5% of S(t), where SPXW
+  0DTE strikes are listed. A strike with no flow yet at t counts as 0. Membership therefore never depends
+  on trades after t.
+- §3 XSP: the XSP profile uses spot = SPX / 10 (XSP is defined as one tenth of SPX).
