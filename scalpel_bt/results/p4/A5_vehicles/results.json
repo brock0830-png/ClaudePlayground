@@ -1,0 +1,72 @@
+{
+ "trades": 153,
+ "period": [
+  "2013-06-20",
+  "2026-07-29"
+ ],
+ "mean_days_held": 7.169934640522876,
+ "mean_tbill": 0.011671895424836603,
+ "vehicles": [
+  {
+   "vehicle": "MES 1x",
+   "mean_pct": 0.8565370071236031,
+   "ci": [
+    0.480411472637831,
+    1.2449842526900508
+   ],
+   "after_tax_pct": 0.6269850892144775,
+   "tax_rate": 0.268,
+   "total_pct": 131.05016208991128,
+   "tbill_income_per_trade_pct": 0.02323765432098765
+  },
+  {
+   "vehicle": "MES 2x",
+   "mean_pct": 1.6898363599262185,
+   "ci": [
+    0.9368125249065521,
+    2.4661757289349806
+   ],
+   "after_tax_pct": 1.236960215465992,
+   "tax_rate": 0.268,
+   "total_pct": 258.54496306871147,
+   "tbill_income_per_trade_pct": 0.02323765432098765
+  },
+  {
+   "vehicle": "SPY 1x",
+   "mean_pct": 0.8398951074357723,
+   "ci": [
+    0.45364576193417705,
+    1.2357285956418602
+   ],
+   "after_tax_pct": 0.5291339176845365,
+   "tax_rate": 0.37,
+   "total_pct": 128.50395143767318
+  },
+  {
+   "vehicle": "SPY 2x (T-bill+1.5%)",
+   "mean_pct": 1.6261498735498303,
+   "ci": [
+    0.8531590403586805,
+    2.4192399763945316
+   ],
+   "after_tax_pct": 1.0244744203363931,
+   "tax_rate": 0.37,
+   "total_pct": 248.8009306531241,
+   "financing_per_trade_pct": 0.053640341321713886
+  },
+  {
+   "vehicle": "SPY 2x (T-bill+5%)",
+   "mean_pct": 1.5557431923588358,
+   "ci": [
+    0.7825453482480831,
+    2.3483717808564886
+   ],
+   "after_tax_pct": 0.9801182111860665,
+   "tax_rate": 0.37,
+   "total_pct": 238.02870843090184,
+   "financing_per_trade_pct": 0.12404702251270878
+  }
+ ],
+ "mes_vs_spy_timing_note": "MES enters 18:00 on the signal day; SPY enters at the next 09:30 open; A4 measures that timing gap on its own.",
+ "mes_notional_today": 38750.0
+}
