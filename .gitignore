@@ -5,3 +5,13 @@ data/raw/*.csv
 data/raw/*.parquet
 data/cache/
 *.bin
+
+# gamma_nodes: secrets and data never go to GitHub (data lives on Google Drive)
+.env
+.env.*
+!.env.example
+gamma_nodes/**/*.parquet
+gamma_nodes/**/*.zip
+gamma_nodes/_work/
+gamma_nodes/local_data/
+gamma_nodes/collector/collector.log
